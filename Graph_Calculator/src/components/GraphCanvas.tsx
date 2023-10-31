@@ -5,6 +5,7 @@ import { OrbitControls } from './OrbitControls.js'
 import { OrbitControlsGizmo } from  "./OrbitControlsGizmo.js";
 import { GridHelper } from 'three';
 import { Generate3DPointsFromFormula, GeneratePointsFromFormula, Topologying } from './Drawing';
+import { pi } from 'mathjs';
 
 interface GraphCanvasProps {
     formula: string;
@@ -33,6 +34,10 @@ const GraphCanvas: React.FC<GraphCanvasProps> = ({ formula }) => {
             }
             window.addEventListener('resize', onWindowResize, false);
 
+            // Add axes
+            const axesHelper = new THREE.AxesHelper(20);
+            scene.add(axesHelper);
+
             // Add GridHelper
             const gridSize = 70;
             var gridDivisions = 200;
@@ -42,6 +47,14 @@ const GraphCanvas: React.FC<GraphCanvasProps> = ({ formula }) => {
             gridHelper.material.fog = true;
             gridHelper.material.transparent = true;
             scene.add(gridHelper);
+
+            var gridHelper2 = new GridHelper(gridSize, gridDivisions, 0x181818, 0x181818);
+            gridHelper2.material.opacity = 0.1;
+            gridHelper2.material.depthWrite = false;
+            gridHelper2.material.fog = true;
+            gridHelper2.material.transparent = true;
+            gridHelper.rotation.x=Math.PI/2;
+            scene.add(gridHelper2);
 
             const cameraDistance = () => camera.position.length(); // Simple distance-from-origin
             
@@ -67,22 +80,63 @@ const GraphCanvas: React.FC<GraphCanvasProps> = ({ formula }) => {
                   scene.add(gridHelper);
                 //}
               };
+
+            // ---------- ----------
+            // POINT LIGHT
+            // ---------- ----------
+            const pl = new THREE.PointLight(0xffffff, 1);
+            pl.position.set(0, 0.5, 0);
+            scene.add( pl );
             
             // Function to generate points from the formula
             const is3DFormula = formula.includes('z');
 
             var meshColor = 0x4356b8;
-            let geometry, material, mesh:any, points:any, wireframeGeometry:any;
+            let geometry, material, mesh:any, points:any, wireframeGeometry:any, shape3DType='points';
+
+            function updateShapeType3D() {
+              // Dispose current mesh and geometry to avoid memory leaks
+              if (mesh) {
+                scene.remove(mesh);
+                mesh.geometry.dispose();
+                if (mesh.material.dispose) mesh.material.dispose();
+              }
+              switch (shape3DType) {
+                case ShapeType.Points:
+                  // Logic for rendering points
+                  points = Generate3DPointsFromFormula(formula);
+                  geometry = new THREE.BufferGeometry().setFromPoints(points);
+                  material = new THREE.PointsMaterial({ color: meshColor, size: 0.1 });
+                  mesh = new THREE.Points(geometry, material);
+                  break;
+                case ShapeType.Mesh:
+                  // Logic for rendering mesh
+                  points = Generate3DPointsFromFormula(formula);
+                  geometry = Topologying(points);
+                  wireframeGeometry = new THREE.WireframeGeometry(geometry);
+                  material = new THREE.LineBasicMaterial({ color: meshColor });
+                  mesh = new THREE.LineSegments(wireframeGeometry, material);
+                  break;
+                case ShapeType.Surface:
+                  // Logic for rendering surface
+                  points = Generate3DPointsFromFormula(formula);
+                  geometry = Topologying(points);
+                  material = new THREE.MeshBasicMaterial(({ color: meshColor, side: THREE.DoubleSide, wireframe: false}));
+                  mesh = new THREE.Mesh(geometry, material);
+                  break;
+              }
+            
+              // Add new mesh to the scene
+              return mesh;
+          }
+
             if (is3DFormula) {
-              points = Generate3DPointsFromFormula(formula);
-              geometry = new THREE.BufferGeometry().setFromPoints(points);
-              material = new THREE.PointsMaterial({ color: meshColor, size: 0.1 });
-              mesh = new THREE.Points(geometry, material);
+              mesh = updateShapeType3D();
             } else {
               points = GeneratePointsFromFormula(formula);
               geometry = new THREE.BufferGeometry().setFromPoints(points);
-              material = new THREE.LineBasicMaterial({ color: meshColor });
-              mesh = new THREE.Line(geometry, material);
+              material = new THREE.PointsMaterial({ color: meshColor, size: 0.2 });
+              mesh = new THREE.Points(geometry, material);
             }
             scene.add(mesh);
 
@@ -90,43 +144,6 @@ const GraphCanvas: React.FC<GraphCanvasProps> = ({ formula }) => {
             const light = new THREE.DirectionalLight(0xffffff, 1);
             light.position.set(0, 0, 5);
             scene.add(light);
-
-            function updateShapeType3D(value:any) {
-                // Dispose current mesh and geometry to avoid memory leaks
-                if (mesh) {
-                  scene.remove(mesh);
-                  mesh.geometry.dispose();
-                  if (mesh.material.dispose) mesh.material.dispose();
-                }
-
-                switch (value) {
-                  case ShapeType.Points:
-                    // Logic for rendering points
-                    points = Generate3DPointsFromFormula(formula);
-                    geometry = new THREE.BufferGeometry().setFromPoints(points);
-                    material = new THREE.PointsMaterial({ color: meshColor, size: 0.1 });
-                    mesh = new THREE.Points(geometry, material);
-                    break;
-                  case ShapeType.Mesh:
-                    // Logic for rendering mesh
-                    points = Generate3DPointsFromFormula(formula);
-                    geometry = Topologying(points);
-                    wireframeGeometry = new THREE.WireframeGeometry(geometry);
-                    material = new THREE.LineBasicMaterial({ color: meshColor });
-                    mesh = new THREE.LineSegments(wireframeGeometry, material);
-                    break;
-                  case ShapeType.Surface:
-                    // Logic for rendering surface
-                    points = Generate3DPointsFromFormula(formula);
-                    geometry = Topologying(points);
-                    material = new THREE.MeshBasicMaterial(({ color: meshColor, side: THREE.DoubleSide, wireframe: false}));
-                    mesh = new THREE.Mesh(geometry, material);
-                    break;
-                }
-              
-                // Add new mesh to the scene
-                scene.add(mesh);
-            }
             
             // Add controller
             const controls = new OrbitControls(camera, renderer.domElement);
@@ -143,7 +160,7 @@ const GraphCanvas: React.FC<GraphCanvasProps> = ({ formula }) => {
                 // Add more types as needed
             };
             const params = {
-                points2D: 50,
+                points2D: 1000,
                 points3D: 30,
                 rangeX: [-10, 10],
                 rangeY: [-10, 10],
@@ -156,6 +173,8 @@ const GraphCanvas: React.FC<GraphCanvasProps> = ({ formula }) => {
                 updateGridHelper();
             });
 
+
+            // ===============================================need to be edited===============================================
             if (is3DFormula) {
                 gui.add(params, 'points3D', 10, 1000).onChange(value => {
                   // Update 3D graph
@@ -187,11 +206,13 @@ const GraphCanvas: React.FC<GraphCanvasProps> = ({ formula }) => {
                 mesh.geometry.dispose();
                 mesh.geometry = new THREE.BufferGeometry().setFromPoints(points);
               }
-
+              // ===============================================need to be edited===============================================
+            
+            
             // Animation loop
             const animate = () => {
                 requestAnimationFrame(animate);
-                updateGridHelper();
+                //updateGridHelper();
                 controls.update();
                 controlsGizmo.update();
                 renderer.render(scene, camera);
