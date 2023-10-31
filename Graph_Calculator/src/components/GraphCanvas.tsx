@@ -3,7 +3,6 @@ import * as THREE from 'three';
 import * as dat from 'dat.gui';
 import { OrbitControls } from './OrbitControls.js'
 import { OrbitControlsGizmo } from  "./OrbitControlsGizmo.js";
-import { parse } from 'mathjs';
 import { GridHelper } from 'three';
 import { Generate3DPointsFromFormula, GeneratePointsFromFormula, Topologying } from './Drawing';
 
@@ -45,15 +44,12 @@ const GraphCanvas: React.FC<GraphCanvasProps> = ({ formula }) => {
             scene.add(gridHelper);
 
             const cameraDistance = () => camera.position.length(); // Simple distance-from-origin
-            let oldScaleFactor = 1; 
             
             var scaleFactor,newGridSize,newGridDivisions;
             const updateGridHelper = () => {
                 scaleFactor = Math.floor(cameraDistance()); // Example scaling, adjust as needed
               
                 //if (scaleFactor !== oldScaleFactor) {
-                  oldScaleFactor = scaleFactor;
-              
                   newGridSize = gridSize * scaleFactor; // Adjust base size
                   newGridDivisions = gridDivisions* scaleFactor; // Adjust base divisions
               

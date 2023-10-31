@@ -46,19 +46,19 @@ export const Generate3DPointsFromFormula = (formula: any, pointsCount = 30) => {
 // Generate a THREE.BufferGeometry from an array of THREE.Vector3
 
 export const Topologying = (points: any) => {
-  let geometry = new THREE.BufferGeometry();
+let geometry = new THREE.BufferGeometry();
 
-  // Flatten the array of Vector3 to an array of coordinates
-  let vertices = [];
-  points.forEach(point => {
+// Flatten the array of Vector3 to an array of coordinates
+let vertices: number[] = [];
+points.forEach((point: THREE.Vector3) => {
     vertices.push(point.x, point.y, point.z);
-  });
+});
 
-  geometry.setAttribute('position', new THREE.Float32BufferAttribute(vertices, 3));
+geometry.setAttribute('position', new THREE.Float32BufferAttribute(vertices, 3));
 
-  // Calculate the indices for the faces
-  let indices = [];
-  let numPointsPerRow = Math.sqrt(points.length); // Assuming a square grid of points
+// Calculate the indices for the faces
+let indices = [];
+let numPointsPerRow = Math.sqrt(points.length); // Assuming a square grid of points
   if (!Number.isInteger(numPointsPerRow)) {
     console.error("The number of points does not form a perfect square, thus cannot be formed into a square grid mesh.");
     return geometry; // Or handle this scenario more appropriately
