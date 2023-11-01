@@ -5,7 +5,7 @@ interface InputBoxProps {
 }
 
 const InputBox: React.FC<InputBoxProps> = ({ onFormulaChange }) => {
-    const [formula, setFormula] = useState("");
+    const [formula, setFormula] = useState("z=cos(x)^2+sin(y)^2");
 
     const handleFormulaChange = (event: React.ChangeEvent<HTMLInputElement>) => {
         const newFormula = event.target.value;
@@ -14,8 +14,8 @@ const InputBox: React.FC<InputBoxProps> = ({ onFormulaChange }) => {
     };
 
     return (
-        <div>
-            <label htmlFor="formula-input">Formula:</label>
+        <div className="InputBox" style={{ marginLeft: "-15%" }}>
+            <label htmlFor="formula-input">Formula: </label>
             <input
                 id="formula-input"
                 type="text"

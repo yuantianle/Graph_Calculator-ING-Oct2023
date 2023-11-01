@@ -4,8 +4,7 @@ import * as dat from 'dat.gui';
 import { OrbitControls } from './OrbitControls.js'
 import { OrbitControlsGizmo } from  "./OrbitControlsGizmo.js";
 import { GridHelper } from 'three';
-import { Generate3DPointsFromFormula, GeneratePointsFromFormula, Topologying } from './Drawing';
-import { pi } from 'mathjs';
+import { Generate3DPointsFromFormula, GeneratePointsFromFormula, Topologying2D, Topologying3D, Topologying3DPoint } from './Drawing';
 
 interface GraphCanvasProps {
     formula: string;
@@ -24,7 +23,7 @@ const GraphCanvas: React.FC<GraphCanvasProps> = ({ formula }) => {
             const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
             renderer.setSize(window.innerWidth*0.8, window.innerHeight*0.7);
 
-            camera.position.z = 5;
+            camera.position.z = 10;
 
             // Handle window resize
             function onWindowResize() {
@@ -68,6 +67,7 @@ const GraphCanvas: React.FC<GraphCanvasProps> = ({ formula }) => {
               
                   // Remove old gridHelper
                   if (gridHelper) scene.remove(gridHelper);
+                  if (gridHelper2) scene.remove(gridHelper2);
               
                   // Create new GridHelper with updated size and divisions
                   gridHelper = new GridHelper(newGridSize, newGridDivisions, 0x181818, 0x181818);
@@ -75,9 +75,17 @@ const GraphCanvas: React.FC<GraphCanvasProps> = ({ formula }) => {
                   gridHelper.material.depthWrite = false;
                   gridHelper.material.fog = true;
                   gridHelper.material.transparent = true;
-              
+
+                  gridHelper2 = new GridHelper(gridSize, gridDivisions, 0x181818, 0x181818);
+                  gridHelper2.material.opacity = 0.1;
+                  gridHelper2.material.depthWrite = false;
+                  gridHelper2.material.fog = true;
+                  gridHelper2.material.transparent = true;
+                  gridHelper.rotation.x=Math.PI/2;
+
                   // Add new gridHelper to the scene
                   scene.add(gridHelper);
+                  scene.add(gridHelper2);
                 //}
               };
 
@@ -85,14 +93,18 @@ const GraphCanvas: React.FC<GraphCanvasProps> = ({ formula }) => {
             // POINT LIGHT
             // ---------- ----------
             const pl = new THREE.PointLight(0xffffff, 1);
-            pl.position.set(0, 0.5, 0);
+            pl.position.set(4, 5, 15);
+            //add light sphere
+            const sphereSize = 1;
+            const pointLightHelper = new THREE.PointLightHelper( pl, sphereSize );
+            scene.add( pointLightHelper );
             scene.add( pl );
             
             // Function to generate points from the formula
             const is3DFormula = formula.includes('z');
-
             var meshColor = 0x4356b8;
             let geometry, material, mesh:any, points:any, wireframeGeometry:any, shape3DType='points';
+
 
             function updateShapeType3D() {
               // Dispose current mesh and geometry to avoid memory leaks
@@ -102,27 +114,27 @@ const GraphCanvas: React.FC<GraphCanvasProps> = ({ formula }) => {
                 if (mesh.material.dispose) mesh.material.dispose();
               }
               switch (shape3DType) {
-                case ShapeType.Points:
+                case 'points':
                   // Logic for rendering points
                   points = Generate3DPointsFromFormula(formula);
-                  geometry = new THREE.BufferGeometry().setFromPoints(points);
-                  material = new THREE.PointsMaterial({ color: meshColor, size: 0.1 });
-                  mesh = new THREE.Points(geometry, material);
+                  //geometry = new THREE.BufferGeometry().setFromPoints(points);
+                  //material = new THREE.PointsMaterial({ color: meshColor, size: 0.1 });
+                  //mesh = new THREE.Points(geometry, material);
+                  mesh = Topologying3DPoint(points,pl);
+                  //mesh = Topologying3D(points);
                   break;
-                case ShapeType.Mesh:
+                case 'mesh':
                   // Logic for rendering mesh
                   points = Generate3DPointsFromFormula(formula);
-                  geometry = Topologying(points);
-                  wireframeGeometry = new THREE.WireframeGeometry(geometry);
-                  material = new THREE.LineBasicMaterial({ color: meshColor });
-                  mesh = new THREE.LineSegments(wireframeGeometry, material);
+                  mesh = Topologying3D(points);
                   break;
-                case ShapeType.Surface:
+                case 'surface':
                   // Logic for rendering surface
                   points = Generate3DPointsFromFormula(formula);
-                  geometry = Topologying(points);
-                  material = new THREE.MeshBasicMaterial(({ color: meshColor, side: THREE.DoubleSide, wireframe: false}));
-                  mesh = new THREE.Mesh(geometry, material);
+                  //geometry = Topologying(points);
+                  //material = new THREE.MeshBasicMaterial(({ color: meshColor, side: THREE.DoubleSide, wireframe: false}));
+                  //mesh = new THREE.Mesh(geometry, material);
+                  mesh = Topologying3D(points);
                   break;
               }
             
@@ -134,9 +146,7 @@ const GraphCanvas: React.FC<GraphCanvasProps> = ({ formula }) => {
               mesh = updateShapeType3D();
             } else {
               points = GeneratePointsFromFormula(formula);
-              geometry = new THREE.BufferGeometry().setFromPoints(points);
-              material = new THREE.PointsMaterial({ color: meshColor, size: 0.2 });
-              mesh = new THREE.Points(geometry, material);
+              mesh = Topologying2D(points, pl);
             }
             scene.add(mesh);
 
@@ -161,7 +171,7 @@ const GraphCanvas: React.FC<GraphCanvasProps> = ({ formula }) => {
             };
             const params = {
                 points2D: 1000,
-                points3D: 30,
+                points3D: 1000,
                 rangeX: [-10, 10],
                 rangeY: [-10, 10],
                 divisions: gridDivisions,
@@ -179,8 +189,8 @@ const GraphCanvas: React.FC<GraphCanvasProps> = ({ formula }) => {
                 gui.add(params, 'points3D', 10, 1000).onChange(value => {
                   // Update 3D graph
                   const points = Generate3DPointsFromFormula(formula, value);
-                  mesh.geometry.dispose();
-                  mesh.geometry = new THREE.BufferGeometry().setFromPoints(points);
+                  //mesh.geometry.dispose();
+                  //mesh.geometry = new THREE.BufferGeometry().setFromPoints(points);
                 });
                 gui.add(params, 'shapeType', Object.values(ShapeType)).onChange(updateShapeType3D);
             } else {
@@ -203,8 +213,8 @@ const GraphCanvas: React.FC<GraphCanvasProps> = ({ formula }) => {
               
               function update3DGraph() {
                 const points = Generate3DPointsFromFormula(formula, params.points3D);
-                mesh.geometry.dispose();
-                mesh.geometry = new THREE.BufferGeometry().setFromPoints(points);
+                //mesh.geometry.dispose();
+                //mesh.geometry = new THREE.BufferGeometry().setFromPoints(points);
               }
               // ===============================================need to be edited===============================================
             
