@@ -13,8 +13,13 @@ const InputBox: React.FC<InputBoxProps> = ({ onFormulaChange }) => {
         onFormulaChange(newFormula);
     };
 
+    const clearFormula = () => {
+        setFormula("");
+        onFormulaChange("");
+    };
+
     return (
-        <div className="InputBox" style={{ marginLeft: "-15%" }}>
+        <div className="InputBox" style={{ marginLeft: "33%", marginBottom: '2%', marginTop: '-1%'}}>
             <label htmlFor="formula-input">Formula: </label>
             <input
                 id="formula-input"
@@ -22,6 +27,13 @@ const InputBox: React.FC<InputBoxProps> = ({ onFormulaChange }) => {
                 value={formula}
                 onChange={handleFormulaChange}
             />
+            <button onClick={clearFormula} style={{
+        padding: '5px 10px', // Adjust padding to change the size
+        fontSize: '0.8em',  // Smaller font size for the button text
+        margin: '5px',      // Margin around the button
+        borderRadius: '4px', // Rounded corners (optional)
+
+    }}>Clear</button>
         </div>
     );
 };

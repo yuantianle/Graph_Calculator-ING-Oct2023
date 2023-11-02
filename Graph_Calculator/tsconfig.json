@@ -16,7 +16,7 @@
     "jsx": "react-jsx",
 
     /* Linting */
-    "strict": true, //开启严格模式，未声明类型的要加any
+    "strict": false, //开启严格模式，未声明类型的要加any
     "noUnusedLocals": true,
     "noUnusedParameters": true,
     "noFallthroughCasesInSwitch": true

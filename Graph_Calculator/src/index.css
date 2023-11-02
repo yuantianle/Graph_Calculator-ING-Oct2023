@@ -2,7 +2,7 @@
   font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
   line-height: 1.5;
   font-weight: 400;
-
+  margin-left: 0;
   color-scheme: light dark;
   color: rgba(255, 255, 255, 0.87);
   background:
@@ -73,17 +73,16 @@ button:focus-visible {
 }
 
 Canvas {
-  margin-left: -18%;
+  margin-right: 14.5%;
 }
 
 h1 {
-  margin-left: -13%;
+  margin-right: -33%;
+  margin-top: -3%;
 }
 h4 {
-  margin-bottom: -3.5%;
-  margin-left: -15%;
-}
-
-InputBox {
-  margin-left: -15%;
+  padding-top: 4%;
+  margin-top: -1%;
+  margin-bottom: -6.5%;
+  margin-right: -33%;
 }
