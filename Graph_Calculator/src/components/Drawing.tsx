@@ -1,8 +1,5 @@
 import * as THREE from 'three';
-import { parse } from 'mathjs';
-import { Delaunay } from 'd3-delaunay';
-import { Matrix } from 'ml-matrix';
-import { PCA } from 'ml-pca';
+import { floor, parse } from 'mathjs';
 
 
 export const GeneratePointsFromFormula = (formula: string, pointsCount = 1000, tolerance = 0.05) => {
@@ -105,6 +102,8 @@ export const Generate3DAllPointsFromFormula = (formula: string, size = 100) => {
 	var axisMax =  10;
 	var axisRange = axisMax - axisMin;
 
+    //transfer size to integer
+    size = floor(size);
 
     for (var k = 0; k < size; k++)
     for (var j = 0; j < size; j++)
@@ -128,7 +127,6 @@ export const Generate3DAllPointsFromFormula = (formula: string, size = 100) => {
 
 export const Generate3DPointsFromFormula = (formula: string, size = 100) => {
     let points = [];
-    let values = [];
     // Rearrange the formula
 
     const rearrangedFormula = formula.includes("=") ?
@@ -144,6 +142,7 @@ export const Generate3DPointsFromFormula = (formula: string, size = 100) => {
 	var axisMax =  10;
 	var axisRange = axisMax - axisMin;
 
+    size = floor(size);
 
     for (var k = 0; k < size; k++)
     for (var j = 0; j < size; j++)
@@ -162,8 +161,7 @@ export const Generate3DPointsFromFormula = (formula: string, size = 100) => {
         }
     }
 
-
-    return {points, values};
+    return points;
 };
 
 //interface Point3D {

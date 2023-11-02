@@ -14,6 +14,7 @@ interface GraphCanvasProps {
 }
 
 var shape3DType = 'points';
+var Resolution = 100;
 
 const GraphCanvas: React.FC<GraphCanvasProps> = ({ formula }) => {
     const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -70,6 +71,7 @@ const GraphCanvas: React.FC<GraphCanvasProps> = ({ formula }) => {
             const cameraDistance = () => camera.position.length(); // Simple distance-from-origin
 
             var scaleFactor, newGridSize, newGridDivisions;
+
             const updateGridHelper = () => {
                 scaleFactor = Math.floor(cameraDistance()); // Example scaling, adjust as needed
 
@@ -130,6 +132,7 @@ const GraphCanvas: React.FC<GraphCanvasProps> = ({ formula }) => {
                 Surface: 'surface',
                 // Add more types as needed
             };
+
             async function updateShapeType3D() {
                 // Dispose current mesh and geometry to avoid memory leaks
                 if (mesh) {
@@ -148,21 +151,20 @@ const GraphCanvas: React.FC<GraphCanvasProps> = ({ formula }) => {
                     scene.remove(mesh);
                 }
                 var points3DSurface;
-                var size = 100;
                 switch (shape3DType) {
                     case ShapeType.Points:// Logic for rendering points
-                        points3DSurface = Generate3DPointsFromFormula(formula);
+                        points3DSurface = Generate3DPointsFromFormula(formula,Resolution);
                         //extract the first element of points3DSurface to points (which is an array of THREE.Vector3)
-                        points = points3DSurface.points;
-                        mesh = await Topologying3DPoint(points, pl);
+                        mesh = await Topologying3DPoint(points3DSurface, pl);
                         break;
                     case ShapeType.Mesh:// Logic for rendering mesh
-                        points3DSurface = Generate3DAllPointsFromFormula(formula,100);
-                        mesh = Topologying3DMarchingCubes(points3DSurface, 100, true);
+                        points3DSurface = Generate3DAllPointsFromFormula(formula,Resolution);
+                        mesh = Topologying3DMarchingCubes(points3DSurface, Resolution, true);
+                        console.log(Resolution);
                         break;
                     case ShapeType.Surface:// Logic for rendering surface
-                        points3DSurface = Generate3DAllPointsFromFormula(formula);
-                        mesh = Topologying3DMarchingCubes(points3DSurface, 100, false);
+                        points3DSurface = Generate3DAllPointsFromFormula(formula,Resolution);
+                        mesh = Topologying3DMarchingCubes(points3DSurface, Resolution, false);
                         break;
                 }
                 
@@ -237,6 +239,7 @@ const GraphCanvas: React.FC<GraphCanvasProps> = ({ formula }) => {
                 //3d
                 'points3D': 1000,
                 'shapeType': shape3DType,
+                'Resolusion': Resolution,
             };
 
             // Add common GUI controls
@@ -245,14 +248,24 @@ const GraphCanvas: React.FC<GraphCanvasProps> = ({ formula }) => {
                 updateGridHelper();
             });
 
+
             // Conditional controls based on formula dimensionality
             if (is3DFormula) {
                 // [1.object to add the property to, 2.name of the property, 3.min value, 4.max value]
                 gui.add(params, 'points3D', 10, 1000).onChange(updateMesh);
                 gui.add(params, 'shapeType', Object.values(ShapeType)).onChange(value => {
                     shape3DType = value;
-                    updateMesh();});
-            } else {
+                    updateMesh();
+                });
+
+                //if(shape3DType==ShapeType.Mesh||shape3DType==ShapeType.Surface){
+                    gui.add(params, 'Resolusion', 10, 150).onChange(value => {
+                        Resolution = value;
+                        updateMesh();
+                    });
+                //}
+            }
+            else {
                 gui.add(params, 'points2D', 10, 1000).onChange(updateMesh);
             }
 

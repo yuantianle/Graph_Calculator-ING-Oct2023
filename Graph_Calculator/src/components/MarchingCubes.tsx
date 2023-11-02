@@ -1,5 +1,6 @@
-import { cos, sin } from 'mathjs';
+import { floor } from 'mathjs';
 import * as THREE from 'three';
+import { BufferGeometryUtils } from 'three/examples/jsm/Addons.js';
 
 
 /////////////////////////////////////
@@ -301,8 +302,8 @@ export const triTable = new Int32Array( [
 
 export const Topologying3DMarchingCubes = function ({points, values}: {points: THREE.Vector3[], values: number[]}, size: number, isFrame: boolean) {
 
+    size = floor(size);
 	// Marching Cubes Algorithm
-	
 	var size2 = size * size; //size is the resolution
 
 	// Vertices may occur along edges of cube, when the values at the edge's endpoints
@@ -463,8 +464,10 @@ export const Topologying3DMarchingCubes = function ({points, values}: {points: T
 	geometry.setAttribute('position', new THREE.Float32BufferAttribute(vertices, 3));
     geometry.setIndex(faces);
     geometry.setAttribute('uv', new THREE.Float32BufferAttribute(uvs, 2));
+    // merge vertex
+    geometry = BufferGeometryUtils.mergeVertices(geometry);
 	geometry.computeVertexNormals();
 	
-	var colorMaterial =  new THREE.MeshPhongMaterial({ color: 0x2c429a, side: THREE.DoubleSide, wireframe: isFrame });//0x5f668e
+	var colorMaterial =  new THREE.MeshPhongMaterial({ color: 0x2c429a, side: THREE.DoubleSide, wireframe: isFrame, flatShading: false, shininess: 20 });//0x5f668e
 	return new THREE.Mesh( geometry, colorMaterial );
 };
