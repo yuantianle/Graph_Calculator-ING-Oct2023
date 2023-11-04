@@ -1,42 +1,195 @@
 #root {
-  max-width: 1280px;
-  margin: 0 auto;
-  padding: 2rem;
-  text-align: center;
+    max-width: 1280px;
+    margin: 0 auto;
+    padding: 2rem;
+    text-align: center;
 }
 
 .logo {
-  height: 6em;
-  padding: 1.5em;
-  will-change: filter;
-  transition: filter 300ms;
+    height: 6em;
+    padding: 1.5em;
+    will-change: filter;
+    transition: filter 300ms;
 }
+
 .logo:hover {
-  filter: drop-shadow(0 0 2em #646cffaa);
+    filter: drop-shadow(0 0 2em #646cffaa);
 }
+
 .logo.react:hover {
-  filter: drop-shadow(0 0 2em #61dafbaa);
+    filter: drop-shadow(0 0 2em #61dafbaa);
 }
 
 @keyframes logo-spin {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg);
-  }
+    from {
+        transform: rotate(0deg);
+    }
+
+    to {
+        transform: rotate(360deg);
+    }
 }
 
 @media (prefers-reduced-motion: no-preference) {
-  a:nth-of-type(2) .logo {
-    animation: logo-spin infinite 20s linear;
-  }
+    a:nth-of-type(2) .logo {
+        animation: logo-spin infinite 20s linear;
+    }
 }
 
 .card {
-  padding: 2em;
+    padding: 2em;
 }
 
 .read-the-docs {
-  color: #888;
+    color: #888;
+}
+
+.App {
+    display: flex;
+}
+
+.FormulaList {
+    flex: 1;
+    width: 15%;
+    transition: transform 0.3s ease-in-out;
+    position: absolute;
+    /* Absolute position */
+    top: 17%;
+    /* At the top of the header */
+    left: 0;
+    /* Aligned to the left */
+    right: 0;
+    /* Stretched to the right */
+    z-index: 10;
+    /* Ensures it is above the canvas */
+    /* ... other styles ... */
+    display: flex;
+    /* Use flexbox for alignment */
+    justify-content: center;
+    /* Center items horizontally */
+}
+
+.FormulaList ul {
+    list-style-type: none;
+    padding: 0;
+}
+
+/* Define the keyframes for the folding effect */
+/* Slide in animation */
+@keyframes slideInFromLeft {
+    0% {
+        transform: translateX(-100%);
+        opacity: 0;
+    }
+
+    100% {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+/* Slide out animation */
+@keyframes slideOutToLeft {
+    0% {
+        transform: translateX(0);
+        opacity: 1;
+    }
+
+    100% {
+        transform: translateX(-100%);
+        opacity: 0;
+    }
+}
+
+
+/* Define the animated styles for the list items */
+.FormulaList li {
+    cursor: pointer;
+    padding: 5px;
+    border: 1px solid #ddd;
+    margin-bottom: 5px;
+    position: relative;
+    overflow: hidden;
+    min-width: 300px;
+    /* The animation properties will be dynamically set in the JavaScript */
+}
+
+/* Define the styles for the open and closed states */
+.FormulaList.open li {
+    animation-name: slideInFromLeft;
+    animation-duration: 1s;
+    /* Adjust timing to your liking */
+    animation-fill-mode: backwards;
+}
+
+.FormulaList.closed li {
+    animation-name: slideOutToLeft;
+    animation-duration: 1s;
+    /* Adjust timing to your liking */
+    animation-fill-mode: forwards;
+}
+
+.FormulaList li:hover {
+    background-color: #000000;
+}
+
+.default-text {
+    display: block;
+}
+
+.formula-text {
+    display: none;
+    /* Hide the formula text by default */
+    /* ...rest of your styling */
+}
+
+.FormulaList li:hover .default-text {
+    display: none;
+    /* Hide the default text on hover */
+}
+
+.FormulaList li:hover .formula-text {
+    display: block;
+    /* Show the formula text on hover */
+}
+
+.Folded {
+    transform: translateX(-220%);
+}
+
+.App-header {
+    position: relative;
+    flex: 4;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+
+
+.ToggleSidebar {
+
+    border-radius: 8px;
+    border: 1px solid transparent;
+    padding: '5px 10px';
+    font-size: 0.8em;
+    font-family: inherit;
+    background-color: #1a1a1a;
+    cursor: pointer;
+    transition: border-color 0.25s;
+
+
+}
+
+.Controls {
+    display: flex;
+    /* Aligns children (button and input box) in a row */
+    align-items: center;
+    /* Vertically centers the children in the row */
+    justify-content: space-between;
+    /* Spaces out the children */
+    padding: 2px;
+    /* Adds some space inside the controls container */
+    gap: 2px;
+    /* Adds space between button and input box */
 }
