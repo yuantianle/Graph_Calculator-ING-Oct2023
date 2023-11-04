@@ -18,7 +18,8 @@
     "ml-pca": "^4.1.1",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
-    "three": "^0.158.0"
+    "three": "^0.158.0",
+    "three.meshline": "^1.4.0"
   },
   "devDependencies": {
     "@types/d3-delaunay": "^6.0.3",

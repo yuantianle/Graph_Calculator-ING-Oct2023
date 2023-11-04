@@ -300,7 +300,7 @@ export const triTable = new Int32Array( [
 - 1, - 1, - 1, - 1, - 1, - 1, - 1, - 1, - 1, - 1, - 1, - 1, - 1, - 1, - 1, - 1 ] );
 
 
-export const Topologying3DMarchingCubes = function ({points, values}: {points: THREE.Vector3[], values: number[]}, size: number, isFrame: boolean) {
+export const Topologying3DMarchingCubes = function ({points, values}: {points: THREE.Vector3[], values: number[]}, size: number, isFrame: boolean, pointLight: THREE.Light) {
 
     size = floor(size);
 	// Marching Cubes Algorithm
@@ -467,7 +467,6 @@ export const Topologying3DMarchingCubes = function ({points, values}: {points: T
     // merge vertex
     geometry = BufferGeometryUtils.mergeVertices(geometry);
 	geometry.computeVertexNormals();
-	
-	var colorMaterial =  new THREE.MeshPhongMaterial({ color: 0x2c429a, side: THREE.DoubleSide, wireframe: isFrame, flatShading: false, shininess: 20 });//0x5f668e
+	var colorMaterial =  new THREE.MeshPhongMaterial({ color: 0x2c429a, side: THREE.DoubleSide, wireframe: isFrame, flatShading: false, shininess: 40 });//0x5f668e
 	return new THREE.Mesh( geometry, colorMaterial );
 };

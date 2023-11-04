@@ -4,8 +4,10 @@ import * as dat from 'dat.gui';
 import { OrbitControls } from './OrbitControls.js'
 import { OrbitControlsGizmo } from "./OrbitControlsGizmo.js";
 import { GridHelper } from 'three';
-import { Generate3DPointsFromFormula, Generate3DAllPointsFromFormula, GeneratePointsFromFormula, Topologying2D, Topologying3DPoint } from './Drawing';
-import { Topologying3DMarchingCubes } from './MarchingCubes.js';
+import { Generate3DPointsFromFormula, Generate3DAllPointsFromFormula, Generate2DAllPointsFromFormula, GeneratePointsFromFormula, Topologying2D, Topologying3DPoint } from './Drawing';
+import { Topologying3DMarchingCubes } from './MarchingCubes.tsx';
+import { Topologying2DMarchingSquares } from './MarchingSquare.tsx';
+import { update } from 'three/examples/jsm/libs/tween.module.js';
 
 
 
@@ -13,8 +15,15 @@ interface GraphCanvasProps {
     formula: string;
 }
 
-var shape3DType = 'points';
-var Resolution = 100;
+var shape3DType = 'surface';
+var shape2DType = 'line';
+var Resolution3D = 110;
+var Resolution2D = 400;
+var DrawRange = 10.0;
+var LightColor = 0xffffff;
+var ifProjection = true;
+var currentCamera;
+var lineWidth = 0.3;
 
 const GraphCanvas: React.FC<GraphCanvasProps> = ({ formula }) => {
     const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -27,20 +36,67 @@ const GraphCanvas: React.FC<GraphCanvasProps> = ({ formula }) => {
             // Basic setup
             // ---------- ----------
             // Set up Three.js scene
-            const scene = new THREE.Scene(); 
-            const camera = new THREE.PerspectiveCamera(75, canvas.clientWidth / canvas.clientHeight, 0.1, 1000); 
-            const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true }); 
+            let perspectiveCamera, orthographicCamera;
+            const scene = new THREE.Scene();
+            const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
             renderer.setSize(window.innerWidth * 0.8, window.innerHeight * 0.72);
 
-            camera.position.z = 20;
+            perspectiveCamera = new THREE.PerspectiveCamera(75, canvas.clientWidth / canvas.clientHeight, 0.1, 1000);
+            perspectiveCamera.position.z = 20;
+
+            const frustumSize = 10;
+            orthographicCamera = new THREE.OrthographicCamera(
+                frustumSize * canvas.clientWidth / canvas.clientHeight / - 2,
+                frustumSize * canvas.clientWidth / canvas.clientHeight / 2,
+                frustumSize / 2,
+                frustumSize / - 2,
+                1,
+                1000
+            );
+
+            currentCamera = ifProjection ? perspectiveCamera : orthographicCamera;
 
             // Handle window resize
             function onWindowResize() {
-                camera.aspect = window.innerWidth / window.innerHeight;
-                camera.updateProjectionMatrix();
-                renderer.setSize(window.innerWidth * 0.8, window.innerHeight * 0.7);
+                // Update the size of the renderer and the canvas
+                renderer.setSize(window.innerWidth * 0.8, window.innerHeight * 0.72);
+
+                // Check if currentCamera is a PerspectiveCamera
+                if (currentCamera instanceof THREE.PerspectiveCamera) {
+                    // Update the camera's aspect ratio and projection matrix
+                    currentCamera.aspect = window.innerWidth / window.innerHeight;
+                    currentCamera.updateProjectionMatrix();
+                }
+                // If the camera is an OrthographicCamera, update accordingly
+                else if (currentCamera instanceof THREE.OrthographicCamera) {
+                    // Calculate new values for the orthographic frustum
+                    const aspect = window.innerWidth / window.innerHeight;
+                    const frustumHeight = currentCamera.top - currentCamera.bottom;
+                    const frustumWidth = frustumHeight * aspect;
+
+                    currentCamera.left = frustumWidth / -2;
+                    currentCamera.right = frustumWidth / 2;
+                    currentCamera.top = frustumHeight / 2;
+                    currentCamera.bottom = frustumHeight / -2;
+                    currentCamera.updateProjectionMatrix();
+                }
             }
             window.addEventListener('resize', onWindowResize, false);
+
+            function updateCamera() {
+                if (ifProjection) {
+                    // Switch to perspective camera
+                    currentCamera = perspectiveCamera;
+                } else {
+                    // Switch to orthographic camera
+                    currentCamera = orthographicCamera;
+                }
+
+                // You may need to update controls if you're using OrbitControls or similar
+                controls = new OrbitControls(currentCamera, renderer.domElement);
+                controls.enableDamping = true;
+                renderer.render(scene, currentCamera)
+            }
 
             // ---------- ----------
             // Add AXES HELPER
@@ -53,7 +109,7 @@ const GraphCanvas: React.FC<GraphCanvasProps> = ({ formula }) => {
             // ---------- ----------
             const gridSize = 70;
             var gridDivisions = 20;
-            var gridHelper = new GridHelper(gridSize*2, gridDivisions*2, 0x181818, 0x181818);
+            var gridHelper = new GridHelper(gridSize * 2, gridDivisions * 2, 0x181818, 0x181818);
             gridHelper.material.opacity = 0.1;
             gridHelper.material.depthWrite = false;
             gridHelper.material.fog = true;
@@ -68,7 +124,7 @@ const GraphCanvas: React.FC<GraphCanvasProps> = ({ formula }) => {
             gridHelper.rotation.x = Math.PI / 2;
             scene.add(gridHelper2);
 
-            const cameraDistance = () => camera.position.length(); // Simple distance-from-origin
+            const cameraDistance = () => currentCamera.position.length(); // Simple distance-from-origin
 
             var scaleFactor, newGridSize, newGridDivisions;
 
@@ -84,7 +140,7 @@ const GraphCanvas: React.FC<GraphCanvasProps> = ({ formula }) => {
                 if (gridHelper2) scene.remove(gridHelper2);
 
                 // Create new GridHelper with updated size and divisions
-                gridHelper = new GridHelper(gridSize*2, gridDivisions*2, 0x181818, 0x181818);
+                gridHelper = new GridHelper(gridSize * 2, gridDivisions * 2, 0x181818, 0x181818);
                 gridHelper.material.opacity = 0.1;
                 gridHelper.material.depthWrite = false;
                 gridHelper.material.fog = true;
@@ -107,33 +163,45 @@ const GraphCanvas: React.FC<GraphCanvasProps> = ({ formula }) => {
             // POINT LIGHT
             // ---------- ----------
 
-            const pl = new THREE.DirectionalLight( 0xffffff, 2);
+            const pl = new THREE.DirectionalLight(LightColor, 3);
             pl.position.set(10, 10, 10);
             //add light sphere
             const sphereSize = 1;
             //const pointLightHelper = new THREE.DirectionalLightHelper(pl, sphereSize);
             //scene.add(pointLightHelper);
             // add spere at light position
-            const pointLightSphere = new THREE.Mesh(new THREE.SphereGeometry(sphereSize), new THREE.MeshBasicMaterial({ color: 0xffffff }));
+            const pointLightSphere = new THREE.Mesh(new THREE.SphereGeometry(sphereSize), new THREE.MeshBasicMaterial({ color: LightColor }));
             pointLightSphere.position.copy(pl.position);
             scene.add(pointLightSphere);
             scene.add(pl);
 
+
+            function updateLight() {
+                pl.color.set(LightColor);
+                pointLightSphere.material.color.set(LightColor);
+            }
+
+
             // Function to generate points from the formula
             const is3DFormula = formula.includes('z');
-            let mesh: any, points: THREE.Vector3[] = [];
+            let mesh: any;
 
             // ---------- ----------
             // Draw 2D/3D graph
             // ---------- ----------
-            const ShapeType = {
+            const eShapeType3D = {
                 Points: 'points',
                 Mesh: 'mesh',
                 Surface: 'surface',
                 // Add more types as needed
             };
+            const eShapeType2D = {
+                Points: 'points',
+                Line: 'line',
+                // Add more types as needed
+            };
 
-            async function updateShapeType3D() {
+            function updateShapeType3D() {
                 // Dispose current mesh and geometry to avoid memory leaks
                 if (mesh) {
                     if (mesh.geometry) {
@@ -152,43 +220,67 @@ const GraphCanvas: React.FC<GraphCanvasProps> = ({ formula }) => {
                 }
                 var points3DSurface;
                 switch (shape3DType) {
-                    case ShapeType.Points:// Logic for rendering points
-                        points3DSurface = Generate3DPointsFromFormula(formula,Resolution);
-                        //extract the first element of points3DSurface to points (which is an array of THREE.Vector3)
-                        mesh = await Topologying3DPoint(points3DSurface, pl);
+                    case eShapeType3D.Points:// Logic for rendering points
+                        points3DSurface = Generate3DPointsFromFormula(formula, Resolution3D, DrawRange);
+                        mesh = Topologying3DPoint(points3DSurface, pl);
                         break;
-                    case ShapeType.Mesh:// Logic for rendering mesh
-                        points3DSurface = Generate3DAllPointsFromFormula(formula,Resolution);
-                        mesh = Topologying3DMarchingCubes(points3DSurface, Resolution, true);
-                        console.log(Resolution);
+                    case eShapeType3D.Mesh:// Logic for rendering mesh
+                        points3DSurface = Generate3DAllPointsFromFormula(formula, Resolution3D, DrawRange);
+                        mesh = Topologying3DMarchingCubes(points3DSurface, Resolution3D, true, pl);
+                        //console.log(Resolution);
                         break;
-                    case ShapeType.Surface:// Logic for rendering surface
-                        points3DSurface = Generate3DAllPointsFromFormula(formula,Resolution);
-                        mesh = Topologying3DMarchingCubes(points3DSurface, Resolution, false);
+                    case eShapeType3D.Surface:// Logic for rendering surface
+                        points3DSurface = Generate3DAllPointsFromFormula(formula, Resolution3D, DrawRange);
+                        mesh = Topologying3DMarchingCubes(points3DSurface, Resolution3D, false, pl);
                         break;
                 }
-                
+
                 // Add new mesh to the scene
                 return mesh;
             }
 
-            async function updateShapeType2D() {
+            function updateShapeType2D() {
                 if (mesh) {
+                    if (mesh.geometry) {
+                        mesh.geometry.dispose();
+                    }
+
+                    if (mesh.material) {
+                        if (Array.isArray(mesh.material)) {
+                            mesh.material.forEach((m: { dispose: () => any; }) => m.dispose && m.dispose());
+                        } else if (mesh.material.dispose) {
+                            mesh.material.dispose();
+                        }
+                    }
+
                     scene.remove(mesh);
-                    mesh.geometry.dispose();
-                    if (mesh.material.dispose) mesh.material.dispose();
                 }
-                points = GeneratePointsFromFormula(formula);
-                mesh = await Topologying2D(points, pl);
+                var points2DLine;
+
+                switch (shape2DType) {
+                    case eShapeType2D.Points:// Logic for rendering points
+                        points2DLine = Generate2DAllPointsFromFormula(formula, Resolution2D, DrawRange);
+                        mesh = Topologying2DMarchingSquares(points2DLine, Resolution2D, false, pl, lineWidth);
+                        //points2DLine = GeneratePointsFromFormula(formula, Resolution2D, DrawRange);
+                        //mesh = Topologying2D(points2DLine, pl);
+                        break;
+                    case eShapeType2D.Line:// Logic for rendering line
+                        points2DLine = Generate2DAllPointsFromFormula(formula, Resolution2D, DrawRange);
+                        mesh = Topologying2DMarchingSquares(points2DLine, Resolution2D, true, pl, lineWidth);
+                        //console.log(Resolution);
+                        break;
+                }
+
                 return mesh;
             }
 
             const updateMesh = async () => {
+
                 if (is3DFormula) {
                     // Await the completion of the async function
-                    mesh = await updateShapeType3D();
+                    mesh = updateShapeType3D();
                 } else {
-                    mesh = await updateShapeType2D();
+                    mesh = updateShapeType2D();
                 }
                 // Add the mesh to the scene only if it's defined
                 if (mesh) {
@@ -200,46 +292,46 @@ const GraphCanvas: React.FC<GraphCanvasProps> = ({ formula }) => {
             updateMesh().catch(error => {
                 console.error("Error updating mesh:", error);
             });
-            
 
-            // ---------- ----------
-            // Add light
-            // ---------- ----------
-            const light = new THREE.DirectionalLight(0xffffff, 1);
-            light.position.set(0, 0, 5);
-            scene.add(light);
 
             // ---------- ----------
             // Setup Orbit Controls and Gizmos
             // ---------- ----------
-            const controls = new OrbitControls(camera, renderer.domElement);
-            const controlsGizmo = new OrbitControlsGizmo(controls, { size: 100, padding: 8, lineWidth: 3 }); // tiny gizmo widget as blender
+            var controls = new OrbitControls(currentCamera, renderer.domElement);
+            var controlsGizmo = new OrbitControlsGizmo(controls, { size: 100, padding: 8, lineWidth: 3 }); // tiny gizmo widget as blender
             document.body.appendChild(controlsGizmo.domElement);
             controls.enableDamping = true;
 
             // ---------- ----------
             // Setup GUI Controls
             // ---------- ----------
-            const gui = new dat.GUI({width: 400,
-                    autoPlace: true,
-                    hideable: true,
-                    closeOnTop: true,
-                    closed: true
-                });
+            const gui = new dat.GUI({
+                width: 400,
+                autoPlace: true,
+                hideable: true,
+                closeOnTop: true,
+                closed: false
+            });
             gui.domElement.id = 'gui';
 
             // initialize values for GUI controls
             const params = {
                 //common
                 'Grid Density': gridDivisions,
-                'X draw range': 0,
-                'Y draw range': 0,
-                //2d
-                'points2D': 1000,
-                //3d
-                'points3D': 1000,
-                'shapeType': shape3DType,
-                'Resolusion': Resolution,
+                'Draw range': DrawRange,
+                'In Projection': ifProjection,
+
+                //light
+                'Light Color': LightColor,
+
+                //3D
+                '3D Resolusion': Resolution3D,
+                '3D Shape Type': shape3DType,
+                //2D
+                '2D Resolusion': Resolution2D,
+                '2D Shape Type': shape2DType,
+                'Shape Size': lineWidth,
+
             };
 
             // Add common GUI controls
@@ -247,43 +339,168 @@ const GraphCanvas: React.FC<GraphCanvasProps> = ({ formula }) => {
                 gridDivisions = value;
                 updateGridHelper();
             });
-
+            gui.add(params, 'In Projection').onChange(value => {
+                ifProjection = value;
+                updateCamera();
+            });
+            gui.addColor(params, 'Light Color').onChange(value => {
+                LightColor = value;
+                updateLight();
+                updateMesh();
+            });
 
             // Conditional controls based on formula dimensionality
             if (is3DFormula) {
                 // [1.object to add the property to, 2.name of the property, 3.min value, 4.max value]
-                gui.add(params, 'points3D', 10, 1000).onChange(updateMesh);
-                gui.add(params, 'shapeType', Object.values(ShapeType)).onChange(value => {
+                gui.add(params, '3D Shape Type', Object.values(eShapeType3D)).onChange(value => {
                     shape3DType = value;
                     updateMesh();
                 });
-
-                //if(shape3DType==ShapeType.Mesh||shape3DType==ShapeType.Surface){
-                    gui.add(params, 'Resolusion', 10, 150).onChange(value => {
-                        Resolution = value;
-                        updateMesh();
-                    });
-                //}
             }
             else {
-                gui.add(params, 'points2D', 10, 1000).onChange(updateMesh);
+                gui.add(params, '2D Shape Type', Object.values(eShapeType2D)).onChange(value => {
+                    shape2DType = value;
+                    updateMesh();
+                });
+                gui.add(params, 'Shape Size', 0.1, 2).onChange(value => {
+                    lineWidth = value;
+                    updateMesh();
+                });
             }
 
             // Creating subfolders for ranges might enhance organization
             const rangeFolder = gui.addFolder('Range Settings');
-            rangeFolder.add(params, 'X draw range', -20, 20).onChange(updateMesh); // Correcting property references
-            rangeFolder.add(params, 'Y draw range', -20, 20).onChange(updateMesh); // Correcting property references
+            rangeFolder.open();
+            rangeFolder.add(params, 'Draw range', 0, 20).onChange(value => {
+                DrawRange = value;
+                updateMesh();
+            });
+            if (is3DFormula) {
+                rangeFolder.add(params, '3D Resolusion', 10, 150).onChange(value => {
+                    Resolution3D = value;
+                    updateMesh();
+                });
+            }
+            else {
+                rangeFolder.add(params, '2D Resolusion', 100, 500).onChange(value => {
+                    Resolution2D = value;
+                    updateMesh();
+                });
+            }
 
+            // ---------- ----------
+            // Ray Caster
+            // ---------- ----------
+
+            var raycaster = new THREE.Raycaster();
+            var mouse = new THREE.Vector2();
+            var clickmouse = new THREE.Vector2();
+            var intersects = [];
+            var selectedObject = null;
+            let isLightSelected = false;
+
+            function onPointerMove(event) {
+                // Update the mouse variable
+                mouse.x = ((event.clientX - canvas.offsetLeft) / canvas.clientWidth) * 2 - 1;
+                mouse.y = -((event.clientY - canvas.offsetTop) / canvas.clientHeight) * 2 + 1;
+
+                raycaster.setFromCamera(mouse, currentCamera);
+                var hoverIntersects = raycaster.intersectObjects(scene.children, true);
+
+                if (hoverIntersects.length > 0) {
+                    let target = hoverIntersects[0].object;
+
+                    if (target === pointLightSphere || target.parent === pl) {
+                        if (!selectedObject) {
+                            pointLightSphere.material.color.set(0xff0000); // Red for hover
+                        }
+                        return;
+                    }
+                }
+                if (!selectedObject)
+                    pointLightSphere.material.color.set(LightColor);
+                return;
+            }
+
+            function onSelect(event) {
+
+                clickmouse.x = ((event.clientX - canvas.offsetLeft) / canvas.clientWidth) * 2 - 1;
+                clickmouse.y = -((event.clientY - canvas.offsetTop) / canvas.clientHeight) * 2 + 1;
+
+                raycaster.setFromCamera(mouse, currentCamera);
+
+                intersects = raycaster.intersectObjects(scene.children, true);
+
+                if (intersects.length > 0) {
+
+                    for (var i = 0; i < intersects.length; i++) {
+                        let target = intersects[i].object;
+
+                        if (!isLightSelected && (target === pointLightSphere || target.parent === pl)) {
+                            // Select the light source for moving
+                            selectedObject = pointLightSphere;
+                            selectedObject.material.color.set(0x0000ff); // Blue for selected
+                            isLightSelected = true;
+                            return; // Prevent deselecting when we have selected the light
+                        } else {
+                            // Clicked again on the light, so deselect
+                            if (selectedObject) {
+                                selectedObject.material.color.set(LightColor);
+                                selectedObject = null;
+                                isLightSelected = false;
+                            }
+                            return;
+                        }
+                    }
+                }
+
+                // Clicked outside. deselect and reset color
+                if (isLightSelected) {
+                    selectedObject.material.color.set(LightColor);
+                    selectedObject = null;
+                    isLightSelected = false;
+                    return;
+                }
+            }
+
+            function dragObject() {
+                if (selectedObject) {
+                    raycaster.setFromCamera(mouse, currentCamera);
+
+                    // Calculate the intersection with a virtual sphere centered at (0,0,0) with radius 40
+                    const sphere = new THREE.Sphere(new THREE.Vector3(0, 0, 0), Math.sqrt(300));
+                    const ray = raycaster.ray;
+                    const intersection = new THREE.Vector3();
+                    const intersectsSphere = ray.intersectSphere(sphere, intersection);
+
+                    if (intersectsSphere) {
+                        // Update the object's position to the intersection point
+                        selectedObject.position.copy(intersection);
+
+                        // If the object is the light source, update its position as well
+                        if (selectedObject === pointLightSphere && pl) {
+                            pl.position.copy(intersection);
+                        }
+                    }
+                }
+            }
+
+            // Add event listeners
+            canvas.addEventListener('pointermove', onPointerMove);
+            canvas.addEventListener('click', onSelect);
 
             // ---------- ----------
             // Render
             // ---------- ----------
             const animate = () => {
                 requestAnimationFrame(animate);
-                updateGridHelper();
+                //updateGridHelper();
+
+                // Perform any updates to objects, controls, or animations
+                dragObject();
                 controls.update();
                 controlsGizmo.update();
-                renderer.render(scene, camera);
+                renderer.render(scene, currentCamera);
             };
             animate();
 
