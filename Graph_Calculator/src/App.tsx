@@ -17,7 +17,7 @@ function App() {
         { formula: '(7-(x^2 + y^2)^0.5)^2+z^2=3^2', defaultText: 'Torus' }, //(R1-(x^2 + y^2)^0.5)^2+z^2=R2^2, r1>r2
         { formula: 'z=sin(sqrt(2*x^2+2*y^2))', defaultText: 'Ripple' },
         { formula: 'z=10-abs(x+y)-abs(y-x)', defaultText: 'Pyramid' },
-        { formula: 'z=z=3/exp(x^2*y^2)', defaultText: 'Intersecting Fences' },
+        { formula: 'z=3/exp(x^2*y^2)', defaultText: 'Intersecting Fences' },
         { formula: 'z=sin(x)*cos(y)', defaultText: 'Bumps' },      
 
         { formula: 'x^2+y^2-5*x=5*sqrt(x^2+y^2)', defaultText: 'Cartesian Heart' },//x^2+y^2-a*x=a*sqrt(x^2+y^2)
