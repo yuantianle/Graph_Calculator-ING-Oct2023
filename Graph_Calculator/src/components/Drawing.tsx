@@ -115,7 +115,7 @@ export const Generate2DAllPointsFromFormula = (formula, resolution = 100.0, draw
     return { points, values };
 };
 
-var loader = new THREE.FileLoader();
+//var loader = new THREE.FileLoader();
 var pSize = 50;
 
 const vertexShader = `varying vec3 vColor;

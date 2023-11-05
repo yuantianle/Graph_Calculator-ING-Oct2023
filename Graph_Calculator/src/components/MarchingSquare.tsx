@@ -1,6 +1,5 @@
 import * as THREE from 'three';
 import { BufferGeometryUtils } from 'three/examples/jsm/Addons.js';
-import { float } from 'three/examples/jsm/nodes/Nodes.js';
 //import { MeshLine, MeshLineMaterial, MeshLineRaycast } from 'three.meshline';
 
 // Marching squares lookup tables

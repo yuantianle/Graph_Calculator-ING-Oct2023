@@ -300,7 +300,7 @@ export const triTable = new Int32Array( [
 - 1, - 1, - 1, - 1, - 1, - 1, - 1, - 1, - 1, - 1, - 1, - 1, - 1, - 1, - 1, - 1 ] );
 
 
-export const Topologying3DMarchingCubes = function ({points, values}: {points: THREE.Vector3[], values: number[]}, size: number, isFrame: boolean, pointLight: THREE.Light) {
+export const Topologying3DMarchingCubes = function ({points, values}: {points: THREE.Vector3[], values: number[]}, size: number, isFrame: boolean) {
 
     size = floor(size);
 	// Marching Cubes Algorithm

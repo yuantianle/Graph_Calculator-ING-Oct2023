@@ -4,10 +4,10 @@ import * as dat from 'dat.gui';
 import { OrbitControls } from './OrbitControls.js'
 import { OrbitControlsGizmo } from "./OrbitControlsGizmo.js";
 import { GridHelper } from 'three';
-import { Generate3DPointsFromFormula, Generate3DAllPointsFromFormula, Generate2DAllPointsFromFormula, GeneratePointsFromFormula, Topologying2D, Topologying3DPoint } from './Drawing';
+import { Generate3DPointsFromFormula, Generate3DAllPointsFromFormula, Generate2DAllPointsFromFormula, Topologying3DPoint } from './Drawing';
 import { Topologying3DMarchingCubes } from './MarchingCubes.tsx';
 import { Topologying2DMarchingSquares } from './MarchingSquare.tsx';
-import { update } from 'three/examples/jsm/libs/tween.module.js';
+//import { update } from 'three/examples/jsm/libs/tween.module.js';
 
 
 
@@ -163,14 +163,14 @@ const GraphCanvas: React.FC<GraphCanvasProps> = ({ formula }) => {
             // POINT LIGHT
             // ---------- ----------
 
-            const pl = new THREE.DirectionalLight(LightColor, 3);
+            var pl = new THREE.DirectionalLight(LightColor, 3);
             pl.position.set(10, 10, 10);
             //add light sphere
             const sphereSize = 1;
             //const pointLightHelper = new THREE.DirectionalLightHelper(pl, sphereSize);
             //scene.add(pointLightHelper);
             // add spere at light position
-            const pointLightSphere = new THREE.Mesh(new THREE.SphereGeometry(sphereSize), new THREE.MeshBasicMaterial({ color: LightColor }));
+            var pointLightSphere = new THREE.Mesh(new THREE.SphereGeometry(sphereSize), new THREE.MeshBasicMaterial({ color: LightColor }));
             pointLightSphere.position.copy(pl.position);
             scene.add(pointLightSphere);
             scene.add(pl);
@@ -226,12 +226,12 @@ const GraphCanvas: React.FC<GraphCanvasProps> = ({ formula }) => {
                         break;
                     case eShapeType3D.Mesh:// Logic for rendering mesh
                         points3DSurface = Generate3DAllPointsFromFormula(formula, Resolution3D, DrawRange);
-                        mesh = Topologying3DMarchingCubes(points3DSurface, Resolution3D, true, pl);
+                        mesh = Topologying3DMarchingCubes(points3DSurface, Resolution3D, true);
                         //console.log(Resolution);
                         break;
                     case eShapeType3D.Surface:// Logic for rendering surface
                         points3DSurface = Generate3DAllPointsFromFormula(formula, Resolution3D, DrawRange);
-                        mesh = Topologying3DMarchingCubes(points3DSurface, Resolution3D, false, pl);
+                        mesh = Topologying3DMarchingCubes(points3DSurface, Resolution3D, false);
                         break;
                 }
 
@@ -395,7 +395,6 @@ const GraphCanvas: React.FC<GraphCanvasProps> = ({ formula }) => {
             var raycaster = new THREE.Raycaster();
             var mouse = new THREE.Vector2();
             var clickmouse = new THREE.Vector2();
-            var intersects = [];
             var selectedObject = null;
             let isLightSelected = false;
 
@@ -423,22 +422,22 @@ const GraphCanvas: React.FC<GraphCanvasProps> = ({ formula }) => {
             }
 
             function onSelect(event) {
+                
 
                 clickmouse.x = ((event.clientX - canvas.offsetLeft) / canvas.clientWidth) * 2 - 1;
                 clickmouse.y = -((event.clientY - canvas.offsetTop) / canvas.clientHeight) * 2 + 1;
 
                 raycaster.setFromCamera(mouse, currentCamera);
-
-                intersects = raycaster.intersectObjects(scene.children, true);
+                var intersects = raycaster.intersectObjects(scene.children, true);
+                
 
                 if (intersects.length > 0) {
 
                     for (var i = 0; i < intersects.length; i++) {
                         let target = intersects[i].object;
-
                         if (!isLightSelected && (target === pointLightSphere || target.parent === pl)) {
                             // Select the light source for moving
-                            selectedObject = pointLightSphere;
+                            selectedObject = pointLightSphere;console.log("click");
                             selectedObject.material.color.set(0x0000ff); // Blue for selected
                             isLightSelected = true;
                             return; // Prevent deselecting when we have selected the light
@@ -447,13 +446,13 @@ const GraphCanvas: React.FC<GraphCanvasProps> = ({ formula }) => {
                             if (selectedObject) {
                                 selectedObject.material.color.set(LightColor);
                                 selectedObject = null;
-                                isLightSelected = false;
+                                isLightSelected = false;console.log("haha");
                             }
                             return;
                         }
                     }
                 }
-
+                
                 // Clicked outside. deselect and reset color
                 if (isLightSelected) {
                     selectedObject.material.color.set(LightColor);
@@ -485,6 +484,7 @@ const GraphCanvas: React.FC<GraphCanvasProps> = ({ formula }) => {
                 }
             }
 
+            canvas.focus();
             // Add event listeners
             canvas.addEventListener('pointermove', onPointerMove);
             canvas.addEventListener('click', onSelect);
