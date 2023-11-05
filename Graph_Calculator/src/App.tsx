@@ -9,19 +9,21 @@ function App() {
     const formulasList = [
         { formula: 'z^2=cos(x)^2+sin(y)^2', defaultText: 'Mattries' },
         { formula: 'cos(z)^2=cos(x)^2+sin(y)^2', defaultText: 'Time Machine' },
+        { formula: 'cos(x)*sin(y)+cos(y)*sin(z)+cos(z)*sin(x)', defaultText: 'Popcorn' },
         { formula: 'x^2+y^2+z^2=40', defaultText: 'Sphere' },
         { formula: 'z^2=x^2+y^2', defaultText: 'Hour Glass' },
         { formula: 'z*10=x^2-y^2', defaultText: 'Hyperbolic Paraboloid' },
         { formula: 'z=10*exp(-(x^2+y^2)/2/3^2)', defaultText: 'Gaussian Function' },
-        { formula: '(0.64*sqrt(abs(x))-0.8+1.2^abs(x)*cos(200*x))*sqrt(cos(x))=y', defaultText: 'Default Txt 2' },
-        { formula: '(0.64*sqrt(abs(x))-0.8+1.2^abs(x)*cos(200*x))*sqrt(cos(x))=y', defaultText: 'Default Text 2' },
-        { formula: 'x^2+y^2-2*x=2*sqrt(x^2+y^2)', defaultText: 'Cartesian Heart' },
-        { formula: '(0.64*sqrt(abs(x))-0.8+1.2^abs(x)*cos(200*x))*sqrt(cos(x))=y', defaultText: 'Default Text 2' },
-        { formula: '(0.64*sqrt(abs(x))-0.8+1.2^abs(x)*cos(200*x))*sqrt(cos(x))=y', defaultText: 'Default Text 2' },
-        { formula: '(0.64*sqrt(abs(x))-0.8+1.2^abs(x)*cos(200*x))*sqrt(cos(x))=y', defaultText: 'Default Text 2' },
-        { formula: '(0.64*sqrt(abs(x))-0.8+1.2^abs(x)*cos(200*x))*sqrt(cos(x))=y', defaultText: 'Default Text 2' },
-        { formula: '(0.64*sqrt(abs(x))-0.8+1.2^abs(x)*cos(200*x))*sqrt(cos(x))=y', defaultText: 'Default Text 2' },
-        { formula: '(0.64*sqrt(abs(x))-0.8+1.2^abs(x)*cos(200*x))*sqrt(cos(x))=y', defaultText: 'Default Text 2' },
+        { formula: '(7-(x^2 + y^2)^0.5)^2+z^2=3^2', defaultText: 'Torus' }, //(R1-(x^2 + y^2)^0.5)^2+z^2=R2^2, r1>r2
+        { formula: 'z=sin(sqrt(2*x^2+2*y^2))', defaultText: 'Ripple' },
+        { formula: 'z=10-abs(x+y)-abs(y-x)', defaultText: 'Pyramid' },
+        { formula: 'z=z=3/exp(x^2*y^2)', defaultText: 'Intersecting Fences' },
+        { formula: 'z=sin(x)*cos(y)', defaultText: 'Bumps' },      
+
+        { formula: 'x^2+y^2-5*x=5*sqrt(x^2+y^2)', defaultText: 'Cartesian Heart' },//x^2+y^2-a*x=a*sqrt(x^2+y^2)
+        { formula: '(x^2+y^2)^2=10^2*(x^2-y^2)', defaultText: 'Lemniscate of Bernoulli' },//(x^2+y^2)^2=a^2*(x^2-y^2)
+        { formula: 'e^(sin(sqrt(x^2*y^2))) =1', defaultText: 'Curtains' },
+
         // ... more formulas
     ];
 
