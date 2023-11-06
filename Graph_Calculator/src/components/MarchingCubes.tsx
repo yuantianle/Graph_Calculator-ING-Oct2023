@@ -622,7 +622,7 @@ export const Topologying3DMarchingCubes = function ({ points, values }: { points
 
         // add a square to the mesh, which is used to show the slice
         var squareGeometry = new THREE.PlaneGeometry(maxXlocation * 2 + 10, maxXlocation * 2 + 10);
-        var squareMaterial = new THREE.MeshPhongMaterial({ color: 0xdcdcaa, side: THREE.DoubleSide });
+        var squareMaterial = new THREE.MeshPhongMaterial({ color: 0xdffcaa, side: THREE.DoubleSide });
         var squareMesh = new THREE.Mesh(squareGeometry, squareMaterial);
         squareMesh.position.set(0, 0, zSlice-0.007);
         squareMesh.material.transparent = true;
