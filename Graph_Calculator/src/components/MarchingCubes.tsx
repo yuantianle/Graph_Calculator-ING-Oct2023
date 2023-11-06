@@ -610,7 +610,7 @@ export const Topologying3DMarchingCubes = function ({ points, values }: { points
         geometry2.setIndex(faces);
         geometry2.setAttribute('uv', new THREE.Float32BufferAttribute(uvs, 2));
         geometry2.computeVertexNormals();
-        colorMaterial2 = new THREE.MeshBasicMaterial({ color: 0xfff201, side: THREE.DoubleSide, wireframe: false});//0x5f668e
+        colorMaterial2 = new THREE.MeshBasicMaterial({ color: 0xff1201, side: THREE.DoubleSide, wireframe: false});//0x5f668e
     }
 
     // genreate mesh based on geometry1 and geometry2
