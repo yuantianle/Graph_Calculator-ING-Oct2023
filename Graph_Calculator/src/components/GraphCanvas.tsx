@@ -17,15 +17,17 @@ interface GraphCanvasProps {
 
 var shape3DType = 'surface';
 var shape2DType = 'line';
-var Resolution3D = 110;
+var Resolution3D = 90;
 var Resolution2D = 400;
 var DrawRange = 7.0;
 var LightColor = 0xffffff;
 var ifProjection = true;
-var currentCamera;
 var lineWidth = 0.3;
 var ifSlice = false;
 var slicezPosition = 0.0;
+var controlsP;
+var controlsO;
+var controlsGizmo;
 
 const trackGeometry = new THREE.SphereGeometry(Math.sqrt(300), 32, 32);
 const trackMaterial = new THREE.MeshBasicMaterial({
@@ -52,87 +54,78 @@ const GraphCanvas: React.FC<GraphCanvasProps> = ({ formula }) => {
             const scene = new THREE.Scene();
             const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
             renderer.setSize(window.innerWidth * 0.8, window.innerHeight * 0.72);
-
             scene.add(trackSphere);
+
             perspectiveCamera = new THREE.PerspectiveCamera(75, canvas.clientWidth / canvas.clientHeight, 0.1, 1000);
             perspectiveCamera.position.z = 20;
 
-            const frustumSize = 10;
+            const frustumSize = 30;
             orthographicCamera = new THREE.OrthographicCamera(
                 frustumSize * canvas.clientWidth / canvas.clientHeight / - 2,
                 frustumSize * canvas.clientWidth / canvas.clientHeight / 2,
                 frustumSize / 2,
                 frustumSize / - 2,
-                1,
+                0.1,
                 1000
             );
-
-            currentCamera = ifProjection ? perspectiveCamera : orthographicCamera;
+            orthographicCamera.position.z = 20;
 
             // Handle window resize
             function onWindowResize() {
                 // Update the size of the renderer and the canvas
                 renderer.setSize(window.innerWidth * 0.8, window.innerHeight * 0.72);
 
-                // Check if currentCamera is a PerspectiveCamera
-                if (currentCamera instanceof THREE.PerspectiveCamera) {
-                    // Update the camera's aspect ratio and projection matrix
-                    currentCamera.aspect = window.innerWidth / window.innerHeight;
-                    currentCamera.updateProjectionMatrix();
-                }
-                // If the camera is an OrthographicCamera, update accordingly
-                else if (currentCamera instanceof THREE.OrthographicCamera) {
-                    // Calculate new values for the orthographic frustum
-                    const aspect = window.innerWidth / window.innerHeight;
-                    const frustumHeight = currentCamera.top - currentCamera.bottom;
-                    const frustumWidth = frustumHeight * aspect;
+                perspectiveCamera.aspect = canvas.clientWidth / canvas.clientHeight;
+                perspectiveCamera.updateProjectionMatrix();
 
-                    currentCamera.left = frustumWidth / -2;
-                    currentCamera.right = frustumWidth / 2;
-                    currentCamera.top = frustumHeight / 2;
-                    currentCamera.bottom = frustumHeight / -2;
-                    currentCamera.updateProjectionMatrix();
-                }
+                const aspect = canvas.clientWidth / canvas.clientHeight;
+                const frustumHeight = orthographicCamera.top - orthographicCamera.bottom;
+                const frustumWidth = frustumHeight * aspect;
+
+                orthographicCamera.left = frustumWidth / -2;
+                orthographicCamera.right = frustumWidth / 2;
+                orthographicCamera.top = frustumHeight / 2;
+                orthographicCamera.bottom = frustumHeight / -2;
+                orthographicCamera.updateProjectionMatrix();
+
             }
             window.addEventListener('resize', onWindowResize, false);
 
             function updateCamera() {
                 if (ifProjection) {
                     // Switch to perspective camera
-                    currentCamera = perspectiveCamera;
+                    //currentCamera = perspectiveCamera;
+                    renderer.render(scene, perspectiveCamera);
                 } else {
                     // Switch to orthographic camera
-                    currentCamera = orthographicCamera;
+                    //currentCamera = orthographicCamera;
+                    renderer.render(scene, orthographicCamera);
                 }
-
-                // You may need to update controls if you're using OrbitControls or similar
-                controls = new OrbitControls(currentCamera, renderer.domElement);
-                controls.enableDamping = true;
-                renderer.render(scene, currentCamera)
             }
 
             // ---------- ----------
             // Add AXES HELPER
             // ---------- ----------
-            const dirX = new THREE.Vector3( 1, 0, 0 );
-            const dirY = new THREE.Vector3( 0, 1, 0 );
-            const dirZ = new THREE.Vector3( 0, 0, 1 );
+
+            const dirX = new THREE.Vector3(1, 0, 0);
+            const dirY = new THREE.Vector3(0, 1, 0);
+            const dirZ = new THREE.Vector3(0, 0, 1);
 
             //normalize the direction vector (convert to vector of length 1)
             dirX.normalize();
             dirY.normalize();
             dirZ.normalize();
 
-            const origin = new THREE.Vector3( 0, 0, 0 );
-            const length = 0.8*currentCamera.position.length();
+            const origin = new THREE.Vector3(0, 0, 0);
+            const length = 0.8 * perspectiveCamera.position.length();
 
-            const arrowHelperX = new THREE.ArrowHelper( dirX, origin, length, 0xff0000, 0.4, 0.3 );
-            const arrowHelperY = new THREE.ArrowHelper( dirY, origin, length, 0x00ff00, 0.4, 0.3 );
-            const arrowHelperZ = new THREE.ArrowHelper( dirZ, origin, length, 0x0000ff, 0.4, 0.3 );
+            const arrowHelperX = new THREE.ArrowHelper(dirX, origin, length, 0xff0000, 0.4, 0.3);
+            const arrowHelperY = new THREE.ArrowHelper(dirY, origin, length, 0x00ff00, 0.4, 0.3);
+            const arrowHelperZ = new THREE.ArrowHelper(dirZ, origin, length, 0x0000ff, 0.4, 0.3);
 
-            scene.add( arrowHelperX );
-            scene.add( arrowHelperY );
-            scene.add( arrowHelperZ );
+            scene.add(arrowHelperX);
+            scene.add(arrowHelperY);
+            scene.add(arrowHelperZ);
 
             //function updateAxis() {
             //    const length = 0.7*currentCamera.position.length();
@@ -146,15 +139,15 @@ const GraphCanvas: React.FC<GraphCanvasProps> = ({ formula }) => {
             // ---------- ----------
             const gridSize = 70;
             var gridDivisions = 20;
+            var scaleFactor = Math.floor(perspectiveCamera.position.length());
             var gridHelper = new GridHelper(gridSize * 2, gridDivisions * 2, 0x181818, 0x181818);
             gridHelper.material.opacity = 0.1;
             gridHelper.material.depthWrite = false;
             gridHelper.material.fog = false;
             gridHelper.material.transparent = true;
-            gridHelper.material.alphaTest = 0.6;
             scene.add(gridHelper);
 
-            var gridHelper2 = new GridHelper(gridSize, gridDivisions, 0x181818, 0x181818);
+            var gridHelper2 = new GridHelper(gridSize * scaleFactor, gridDivisions * scaleFactor, 0x181818, 0x181818);
             gridHelper2.material.opacity = 0.1;
             gridHelper2.material.depthWrite = false;
             gridHelper2.material.fog = false;
@@ -162,16 +155,8 @@ const GraphCanvas: React.FC<GraphCanvasProps> = ({ formula }) => {
             gridHelper.rotation.x = Math.PI / 2;
             scene.add(gridHelper2);
 
-            const cameraDistance = () => currentCamera.position.length(); // Simple distance-from-origin
-
-            var scaleFactor, newGridSize, newGridDivisions;
-
             const updateGridHelper = () => {
-                scaleFactor = Math.floor(cameraDistance()); // Example scaling, adjust as needed
-
-                //if (scaleFactor !== oldScaleFactor) {
-                newGridSize = gridSize * scaleFactor; // Adjust base size
-                newGridDivisions = gridDivisions * scaleFactor; // Adjust base divisions
+                 // Example scaling, adjust as needed
 
                 // Remove old gridHelper
                 if (gridHelper) scene.remove(gridHelper);
@@ -184,7 +169,7 @@ const GraphCanvas: React.FC<GraphCanvasProps> = ({ formula }) => {
                 gridHelper.material.fog = false;
                 gridHelper.material.transparent = true;
 
-                gridHelper2 = new GridHelper(newGridSize, newGridDivisions, 0x181818, 0x181818);
+                gridHelper2 = new GridHelper(gridSize * scaleFactor, gridDivisions * scaleFactor, 0x181818, 0x181818);
                 gridHelper2.material.opacity = 0.1;
                 gridHelper2.material.depthWrite = false;
                 gridHelper2.material.fog = false;
@@ -324,21 +309,26 @@ const GraphCanvas: React.FC<GraphCanvasProps> = ({ formula }) => {
                 if (mesh) {
                     scene.add(mesh);
                 }
+                controlsP.enableDamping = true;
+                controlsO.enableDamping = true;
+
             };
 
             // Execute the function
-            updateMesh().catch(error => {
-                console.error("Error updating mesh:", error);
-            });
+            updateMesh();
 
 
             // ---------- ----------
             // Setup Orbit Controls and Gizmos
             // ---------- ----------
-            var controls = new OrbitControls(currentCamera, renderer.domElement);
-            var controlsGizmo = new OrbitControlsGizmo(controls, { size: 100, padding: 8, lineWidth: 3 }); // tiny gizmo widget as blender
+            controlsP = new OrbitControls(perspectiveCamera, renderer.domElement);
+            controlsP.enableDamping = true;
+
+            controlsO = new OrbitControls(orthographicCamera, renderer.domElement);
+            controlsO.enableDamping = true;
+
+            controlsGizmo = new OrbitControlsGizmo(controlsP, { size: 100, padding: 8, lineWidth: 3 }); // tiny gizmo widget as blender
             document.body.appendChild(controlsGizmo.domElement);
-            controls.enableDamping = true;
 
             // ---------- ----------
             // Setup GUI Controls
@@ -453,7 +443,8 @@ const GraphCanvas: React.FC<GraphCanvasProps> = ({ formula }) => {
                 mouse.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
                 mouse.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
 
-                raycaster.setFromCamera(mouse, currentCamera);
+                if(ifProjection) raycaster.setFromCamera(mouse, perspectiveCamera);
+                else raycaster.setFromCamera(mouse, orthographicCamera);
                 var hoverIntersects = raycaster.intersectObjects(scene.children, true);
 
                 if (hoverIntersects.length > 0) {
@@ -477,13 +468,14 @@ const GraphCanvas: React.FC<GraphCanvasProps> = ({ formula }) => {
                 clickmouse.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
                 clickmouse.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
 
-                raycaster.setFromCamera(mouse, currentCamera);
+                if(ifProjection) raycaster.setFromCamera(mouse, perspectiveCamera);
+                else raycaster.setFromCamera(mouse, orthographicCamera);
                 var intersects = raycaster.intersectObjects(scene.children, true);
 
                 if (intersects.length > 0) {
                     for (var i = 0; i < intersects.length; i++) {
                         let target = intersects[i].object;
-                        if (!isLightSelected &&(target === pointLightSphere || target.parent === pl)) {
+                        if (!isLightSelected && (target === pointLightSphere || target.parent === pl)) {
                             selectedObject = pointLightSphere;
                             selectedObject.material.color.set(0x0000ff); // Blue for selected
                             isLightSelected = true;
@@ -514,7 +506,8 @@ const GraphCanvas: React.FC<GraphCanvasProps> = ({ formula }) => {
 
             function dragObject() {
                 if (selectedObject) {
-                    raycaster.setFromCamera(mouse, currentCamera);
+                    if(ifProjection) raycaster.setFromCamera(mouse, perspectiveCamera);
+                    else raycaster.setFromCamera(mouse, orthographicCamera);
 
                     // Calculate the intersection with a virtual sphere centered at (0,0,0) with radius 40
                     const sphere = new THREE.Sphere(new THREE.Vector3(0, 0, 0), Math.sqrt(300));
@@ -548,10 +541,12 @@ const GraphCanvas: React.FC<GraphCanvasProps> = ({ formula }) => {
 
                 // Perform any updates to objects, controls, or animations
                 dragObject();
-                controls.update();
+                controlsP.update();
+                controlsO.update();
+
                 controlsGizmo.update();
-                //updateAxis();
-                renderer.render(scene, currentCamera);
+
+                updateCamera();
             };
             animate();
 
@@ -589,8 +584,12 @@ const GraphCanvas: React.FC<GraphCanvasProps> = ({ formula }) => {
                 renderer.dispose();
 
                 // Remove controls if they exist
-                if (controls) {
-                    controls.dispose();
+                if (controlsP) {
+                    controlsP.dispose();
+                    controlsGizmo.dispose();
+                }
+                if (controlsO) {
+                    controlsO.dispose();
                     controlsGizmo.dispose();
                 }
             };

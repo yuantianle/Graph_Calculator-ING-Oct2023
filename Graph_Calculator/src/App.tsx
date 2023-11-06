@@ -7,9 +7,9 @@ import InputBox from './components/InputBox';
 function App() {
     // Predefined formulas list
     const formulasList = [
+        { formula: 'cos(x)*sin(y)+cos(y)*sin(z)+cos(z)*sin(x)', defaultText: 'Popcorn' },
         { formula: 'z^2=cos(x)^2+sin(y)^2', defaultText: 'Mattries' },
         { formula: 'cos(z)^2=cos(x)^2+sin(y)^2', defaultText: 'Time Machine' },
-        { formula: 'cos(x)*sin(y)+cos(y)*sin(z)+cos(z)*sin(x)', defaultText: 'Popcorn' },
         { formula: 'x^2+y^2+z^2=40', defaultText: 'Sphere' },
         { formula: 'x^2+z^2=y^2', defaultText: 'Hour Glass' },
         { formula: 'x^2-z^2=y', defaultText: 'Hyperbolic Paraboloid' },
