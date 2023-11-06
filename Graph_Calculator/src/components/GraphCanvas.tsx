@@ -24,6 +24,8 @@ var LightColor = 0xffffff;
 var ifProjection = true;
 var currentCamera;
 var lineWidth = 0.3;
+var ifSlice = false;
+var slicezPosition = 0.0;
 
 const trackGeometry = new THREE.SphereGeometry(Math.sqrt(300), 32, 32);
 const trackMaterial = new THREE.MeshBasicMaterial({
@@ -147,14 +149,15 @@ const GraphCanvas: React.FC<GraphCanvasProps> = ({ formula }) => {
             var gridHelper = new GridHelper(gridSize * 2, gridDivisions * 2, 0x181818, 0x181818);
             gridHelper.material.opacity = 0.1;
             gridHelper.material.depthWrite = false;
-            gridHelper.material.fog = true;
+            gridHelper.material.fog = false;
             gridHelper.material.transparent = true;
+            gridHelper.material.alphaTest = 0.6;
             scene.add(gridHelper);
 
             var gridHelper2 = new GridHelper(gridSize, gridDivisions, 0x181818, 0x181818);
             gridHelper2.material.opacity = 0.1;
             gridHelper2.material.depthWrite = false;
-            gridHelper2.material.fog = true;
+            gridHelper2.material.fog = false;
             gridHelper2.material.transparent = true;
             gridHelper.rotation.x = Math.PI / 2;
             scene.add(gridHelper2);
@@ -178,13 +181,13 @@ const GraphCanvas: React.FC<GraphCanvasProps> = ({ formula }) => {
                 gridHelper = new GridHelper(gridSize * 2, gridDivisions * 2, 0x181818, 0x181818);
                 gridHelper.material.opacity = 0.1;
                 gridHelper.material.depthWrite = false;
-                gridHelper.material.fog = true;
+                gridHelper.material.fog = false;
                 gridHelper.material.transparent = true;
 
                 gridHelper2 = new GridHelper(newGridSize, newGridDivisions, 0x181818, 0x181818);
                 gridHelper2.material.opacity = 0.1;
                 gridHelper2.material.depthWrite = false;
-                gridHelper2.material.fog = true;
+                gridHelper2.material.fog = false;
                 gridHelper2.material.transparent = true;
                 gridHelper.rotation.x = Math.PI / 2;
 
@@ -261,12 +264,12 @@ const GraphCanvas: React.FC<GraphCanvasProps> = ({ formula }) => {
                         break;
                     case eShapeType3D.Mesh:// Logic for rendering mesh
                         points3DSurface = Generate3DAllPointsFromFormula(formula, Resolution3D, DrawRange);
-                        mesh = Topologying3DMarchingCubes(points3DSurface, Resolution3D, true);
+                        mesh = Topologying3DMarchingCubes(points3DSurface, Resolution3D, true, ifSlice, slicezPosition, DrawRange);
                         //console.log(Resolution);
                         break;
                     case eShapeType3D.Surface:// Logic for rendering surface
                         points3DSurface = Generate3DAllPointsFromFormula(formula, Resolution3D, DrawRange);
-                        mesh = Topologying3DMarchingCubes(points3DSurface, Resolution3D, false);
+                        mesh = Topologying3DMarchingCubes(points3DSurface, Resolution3D, false, ifSlice, slicezPosition, DrawRange);
                         break;
                 }
 
@@ -362,6 +365,9 @@ const GraphCanvas: React.FC<GraphCanvasProps> = ({ formula }) => {
                 //3D
                 '3D Resolusion': Resolution3D,
                 '3D Shape Type': shape3DType,
+                'If Slice': ifSlice,
+                'Slice Position Z': slicezPosition,
+
                 //2D
                 '2D Resolusion': Resolution2D,
                 '2D Shape Type': shape2DType,
@@ -389,6 +395,14 @@ const GraphCanvas: React.FC<GraphCanvasProps> = ({ formula }) => {
                 // [1.object to add the property to, 2.name of the property, 3.min value, 4.max value]
                 gui.add(params, '3D Shape Type', Object.values(eShapeType3D)).onChange(value => {
                     shape3DType = value;
+                    updateMesh();
+                });
+                gui.add(params, 'If Slice').onChange(value => {
+                    ifSlice = value;
+                    updateMesh();
+                });
+                gui.add(params, 'Slice Position Z', -DrawRange, DrawRange).onChange(value => {
+                    slicezPosition = value;
                     updateMesh();
                 });
             }
