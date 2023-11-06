@@ -353,7 +353,7 @@ const GraphCanvas: React.FC<GraphCanvasProps> = ({ formula }) => {
                 //3D
                 '3D Resolusion': Resolution3D,
                 '3D Shape Type': shape3DType,
-                'If Slice': ifSlice,
+                'If Sliced': ifSlice,
                 'Slice Position Z': slicezPosition,
 
                 //2D
@@ -385,7 +385,7 @@ const GraphCanvas: React.FC<GraphCanvasProps> = ({ formula }) => {
                     shape3DType = value;
                     updateMesh();
                 });
-                gui.add(params, 'If Slice').onChange(value => {
+                gui.add(params, 'If Sliced').onChange(value => {
                     ifSlice = value;
                     updateMesh();
                 });

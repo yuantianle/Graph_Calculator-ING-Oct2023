@@ -624,7 +624,7 @@ export const Topologying3DMarchingCubes = function ({ points, values }: { points
         var squareGeometry = new THREE.PlaneGeometry(maxXlocation * 2 + 10, maxXlocation * 2 + 10);
         var squareMaterial = new THREE.MeshPhongMaterial({ color: 0xdffcaa, side: THREE.DoubleSide });
         var squareMesh = new THREE.Mesh(squareGeometry, squareMaterial);
-        squareMesh.position.set(0, 0, zSlice-0.007);
+        squareMesh.position.set(0, 0, zSlice-0.05);
         squareMesh.material.transparent = true;
         squareMesh.material.opacity = 0.7;
         mesh.add(squareMesh);
