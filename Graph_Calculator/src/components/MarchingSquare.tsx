@@ -174,6 +174,7 @@ export function Topologying2DMarchingSquares({ points, values }: { points: THREE
         let vertexIndex = 0;
         const numSides = 8; // Number of sides for the cylinders
         const angleIncrement = (Math.PI * 2) / numSides;
+        const radius = width / 2;
 
         for (let i = 0; i < positions.length - 6; i += 6) {
             const startX = positions[i];
@@ -193,12 +194,12 @@ export function Topologying2DMarchingSquares({ points, values }: { points: THREE
             for (let j = 0; j < numSides; j++) {
                 startQuaternion.setFromAxisAngle(vectorDirection, angleIncrement * j);
                 const dirVector = new THREE.Vector3().copy(axis).applyQuaternion(startQuaternion).normalize().multiplyScalar(width / 2);
-                
+
                 const normalVector = dirVector.clone().normalize();
                 // Start cap points
                 var segLen = 0.01;
-                vertices.push(startX + dirVector.x - vectorDirection.x*segLen, startY + dirVector.y- vectorDirection.y*segLen, startZ + dirVector.z- vectorDirection.z*segLen);
-                normals.push(normalVector.x+vectorDirection.x*segLen, normalVector.y+ vectorDirection.y*segLen, normalVector.z+vectorDirection.z*segLen);
+                vertices.push(startX + dirVector.x - vectorDirection.x * segLen, startY + dirVector.y - vectorDirection.y * segLen, startZ + dirVector.z - vectorDirection.z * segLen);
+                normals.push(normalVector.x + vectorDirection.x * segLen, normalVector.y + vectorDirection.y * segLen, normalVector.z + vectorDirection.z * segLen);
                 // End cap points
                 vertices.push(endX + dirVector.x, endY + dirVector.y, endZ + dirVector.z);
                 normals.push(normalVector.x, normalVector.y, normalVector.z);
@@ -215,17 +216,71 @@ export function Topologying2DMarchingSquares({ points, values }: { points: THREE
                 faces.push(startCapIndex, nextStartCapIndex, nextEndCapIndex);
             }
 
+            // Function to create cap vertices and faces
+
+            function addCap(center, direction, isBottomCap) {
+                // Add the center vertex for the cap
+                const centerIndex = vertices.length / 3; // Vertex index for the center
+                vertices.push(center.x, center.y, center.z);
+                normals.push(direction.x, direction.y, direction.z);
+                vertexIndex += 1;
+            
+                // Generate the circular outline of the cap
+                let angleIncrement = Math.PI * 2 / numSides;
+                for (let i = 0; i < numSides; i++) {
+                    const angle = angleIncrement * i;
+                    const x = Math.cos(angle) * radius;
+                    const y = Math.sin(angle) * radius;
+            
+                    // We're working in the XY plane, so we'll need to rotate these points
+                    // around the direction vector to align them properly with the end of the segment
+                    // Use quaternion for this rotation
+                    const vector = new THREE.Vector3(x, y, 0);
+                    const quaternion = new THREE.Quaternion();
+                    quaternion.setFromUnitVectors(new THREE.Vector3(0, 0, 1), direction.clone().normalize());
+                    vector.applyQuaternion(quaternion);
+            
+                    // Add the cap outline vertices
+                    vertices.push(center.x + vector.x, center.y + vector.y, center.z + vector.z);
+                    normals.push(direction.x, direction.y, direction.z);
+                    vertexIndex += 1;
+                }
+            
+                // Add the faces for the cap
+                for (let i = 0; i < numSides; i++) {
+                    const nextIndex = (i + 1) % numSides;
+                    if (isBottomCap) {
+                        faces.push(centerIndex, centerIndex + i + 1, centerIndex + nextIndex + 1);
+                    } else {
+                        faces.push(centerIndex, centerIndex + nextIndex + 1, centerIndex + i + 1);
+                    }
+                }
+            }
+            
+
+            // Generate the end caps
+            const start = new THREE.Vector3(startX, startY, startZ);
+            const end = new THREE.Vector3(endX, endY, endZ);
+            const direction = vectorDirection;
+
+            // Add the bottom cap
+            addCap(start, direction.clone(), true);
+            // Add the top cap
+            addCap(end, direction.clone(), false);
+
             vertexIndex += numSides * 2; // Increment by the number of sides times two for both start and end caps
         }
         geometry2.setAttribute('position', new THREE.Float32BufferAttribute(vertices, 3));
         geometry2.setAttribute('normal', new THREE.Float32BufferAttribute(normals, 3));
         geometry2.setIndex(faces);
         mesh = new THREE.Mesh(geometry2, shaderMaterial);
+
     }
 
     return mesh;
 
 }
+
 
 const vertexShader = `varying vec3 vColor;
 varying vec3 vNormal;

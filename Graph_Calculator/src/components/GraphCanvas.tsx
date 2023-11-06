@@ -19,11 +19,21 @@ var shape3DType = 'surface';
 var shape2DType = 'line';
 var Resolution3D = 110;
 var Resolution2D = 400;
-var DrawRange = 10.0;
+var DrawRange = 7.0;
 var LightColor = 0xffffff;
 var ifProjection = true;
 var currentCamera;
 var lineWidth = 0.3;
+
+const trackGeometry = new THREE.SphereGeometry(Math.sqrt(300), 32, 32);
+const trackMaterial = new THREE.MeshBasicMaterial({
+    color: 0xffffff, // Use red or any color that stands out
+    wireframe: true,   // Wireframe to make it only an outline,
+    transparent: true,
+    opacity: 0.1
+});
+const trackSphere = new THREE.Mesh(trackGeometry, trackMaterial);
+trackSphere.visible = false; // Start with the sphere invisible
 
 const GraphCanvas: React.FC<GraphCanvasProps> = ({ formula }) => {
     const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -41,6 +51,7 @@ const GraphCanvas: React.FC<GraphCanvasProps> = ({ formula }) => {
             const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
             renderer.setSize(window.innerWidth * 0.8, window.innerHeight * 0.72);
 
+            scene.add(trackSphere);
             perspectiveCamera = new THREE.PerspectiveCamera(75, canvas.clientWidth / canvas.clientHeight, 0.1, 1000);
             perspectiveCamera.position.z = 20;
 
@@ -101,8 +112,32 @@ const GraphCanvas: React.FC<GraphCanvasProps> = ({ formula }) => {
             // ---------- ----------
             // Add AXES HELPER
             // ---------- ----------
-            const axesHelper = new THREE.AxesHelper(20);
-            scene.add(axesHelper);
+            const dirX = new THREE.Vector3( 1, 0, 0 );
+            const dirY = new THREE.Vector3( 0, 1, 0 );
+            const dirZ = new THREE.Vector3( 0, 0, 1 );
+
+            //normalize the direction vector (convert to vector of length 1)
+            dirX.normalize();
+            dirY.normalize();
+            dirZ.normalize();
+
+            const origin = new THREE.Vector3( 0, 0, 0 );
+            const length = 0.8*currentCamera.position.length();
+
+            const arrowHelperX = new THREE.ArrowHelper( dirX, origin, length, 0xff0000, 0.4, 0.3 );
+            const arrowHelperY = new THREE.ArrowHelper( dirY, origin, length, 0x00ff00, 0.4, 0.3 );
+            const arrowHelperZ = new THREE.ArrowHelper( dirZ, origin, length, 0x0000ff, 0.4, 0.3 );
+
+            scene.add( arrowHelperX );
+            scene.add( arrowHelperY );
+            scene.add( arrowHelperZ );
+
+            //function updateAxis() {
+            //    const length = 0.7*currentCamera.position.length();
+            //    arrowHelperX.setLength(length, length*0.04, length*0.03);
+            //    arrowHelperY.setLength(length, length*0.04, length*0.03);
+            //    arrowHelperZ.setLength(length, length*0.04, length*0.03);
+            //}
 
             // ---------- ----------
             // Add GRID HELPER
@@ -400,20 +435,22 @@ const GraphCanvas: React.FC<GraphCanvasProps> = ({ formula }) => {
 
             function onPointerMove(event) {
                 // Update the mouse variable
-                mouse.x = ((event.clientX - canvas.offsetLeft) / canvas.clientWidth) * 2 - 1;
-                mouse.y = -((event.clientY - canvas.offsetTop) / canvas.clientHeight) * 2 + 1;
+                const rect = canvas.getBoundingClientRect();
+                mouse.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
+                mouse.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
 
                 raycaster.setFromCamera(mouse, currentCamera);
                 var hoverIntersects = raycaster.intersectObjects(scene.children, true);
 
                 if (hoverIntersects.length > 0) {
-                    let target = hoverIntersects[0].object;
-
-                    if (target === pointLightSphere || target.parent === pl) {
-                        if (!selectedObject) {
-                            pointLightSphere.material.color.set(0xff0000); // Red for hover
+                    for (var i = 0; i < hoverIntersects.length; i++) {
+                        let target = hoverIntersects[i].object;
+                        if (target === pointLightSphere || target.parent === pl) {
+                            if (!selectedObject) {
+                                pointLightSphere.material.color.set(0xff0000); // Red for hover
+                            }
+                            return;
                         }
-                        return;
                     }
                 }
                 if (!selectedObject)
@@ -422,37 +459,36 @@ const GraphCanvas: React.FC<GraphCanvasProps> = ({ formula }) => {
             }
 
             function onSelect(event) {
-                
-
-                clickmouse.x = ((event.clientX - canvas.offsetLeft) / canvas.clientWidth) * 2 - 1;
-                clickmouse.y = -((event.clientY - canvas.offsetTop) / canvas.clientHeight) * 2 + 1;
+                const rect = canvas.getBoundingClientRect();
+                clickmouse.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
+                clickmouse.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
 
                 raycaster.setFromCamera(mouse, currentCamera);
                 var intersects = raycaster.intersectObjects(scene.children, true);
-                
 
                 if (intersects.length > 0) {
-
                     for (var i = 0; i < intersects.length; i++) {
                         let target = intersects[i].object;
-                        if (!isLightSelected && (target === pointLightSphere || target.parent === pl)) {
-                            // Select the light source for moving
-                            selectedObject = pointLightSphere;console.log("click");
+                        if (!isLightSelected &&(target === pointLightSphere || target.parent === pl)) {
+                            selectedObject = pointLightSphere;
                             selectedObject.material.color.set(0x0000ff); // Blue for selected
                             isLightSelected = true;
+                            trackSphere.visible = true;
                             return; // Prevent deselecting when we have selected the light
-                        } else {
+                        }
+                        else if (target === selectedObject) {
                             // Clicked again on the light, so deselect
                             if (selectedObject) {
                                 selectedObject.material.color.set(LightColor);
                                 selectedObject = null;
-                                isLightSelected = false;console.log("haha");
+                                isLightSelected = false;
+                                trackSphere.visible = false;
                             }
                             return;
                         }
                     }
                 }
-                
+
                 // Clicked outside. deselect and reset color
                 if (isLightSelected) {
                     selectedObject.material.color.set(LightColor);
@@ -500,6 +536,7 @@ const GraphCanvas: React.FC<GraphCanvasProps> = ({ formula }) => {
                 dragObject();
                 controls.update();
                 controlsGizmo.update();
+                //updateAxis();
                 renderer.render(scene, currentCamera);
             };
             animate();

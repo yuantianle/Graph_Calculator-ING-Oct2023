@@ -110,9 +110,11 @@
     margin-bottom: 5px;
     position: relative;
     overflow: hidden;
-    min-width: 300px;
+    min-width: 320px;
     /* The animation properties will be dynamically set in the JavaScript */
+    transition: background-color 0.5s ease-in-out;
 }
+
 
 /* Define the styles for the open and closed states */
 .FormulaList.open li {
@@ -131,6 +133,7 @@
 
 .FormulaList li:hover {
     background-color: #000000;
+    /*add some dynamic effect*/
 }
 
 .default-text {
