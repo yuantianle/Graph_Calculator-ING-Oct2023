@@ -475,7 +475,7 @@ export const Topologying3DMarchingCubes = function ({ points, values }: { points
         let vertices = [];
         let faces = [];
         let uvs = [];
-        z = floor((floor(zSlice) + drawRange) / (2 * drawRange) * (size - 2));
+        z = floor((zSlice + drawRange) / (2 * drawRange) * (size - 2));
 
         for (var y = 0; y < size - 1; y++) {
             for (var x = 0; x < size - 1; x++) {
@@ -624,7 +624,7 @@ export const Topologying3DMarchingCubes = function ({ points, values }: { points
         var squareGeometry = new THREE.PlaneGeometry(maxXlocation * 2 + 10, maxXlocation * 2 + 10);
         var squareMaterial = new THREE.MeshPhongMaterial({ color: 0xdcdcaa, side: THREE.DoubleSide });
         var squareMesh = new THREE.Mesh(squareGeometry, squareMaterial);
-        squareMesh.position.set(0, 0, floor(zSlice));
+        squareMesh.position.set(0, 0, zSlice);
         squareMesh.material.transparent = true;
         squareMesh.material.opacity = 0.7;
         mesh.add(squareMesh);
