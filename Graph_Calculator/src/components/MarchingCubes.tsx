@@ -475,7 +475,7 @@ export const Topologying3DMarchingCubes = function ({ points, values }: { points
         let vertices = [];
         let faces = [];
         let uvs = [];
-        z = floor((floor(zSlice) + drawRange) / (2 * drawRange) * (size - 1));
+        z = floor((floor(zSlice) + drawRange) / (2 * drawRange) * (size - 2));
 
         for (var y = 0; y < size - 1; y++) {
             for (var x = 0; x < size - 1; x++) {
@@ -610,13 +610,13 @@ export const Topologying3DMarchingCubes = function ({ points, values }: { points
         geometry2.setIndex(faces);
         geometry2.setAttribute('uv', new THREE.Float32BufferAttribute(uvs, 2));
         geometry2.computeVertexNormals();
-        colorMaterial2 = new THREE.MeshPhongMaterial({ color: 0xff3001, side: THREE.DoubleSide, wireframe: isFrame, flatShading: false, shininess: 40 });//0x5f668e
+        colorMaterial2 = new THREE.MeshBasicMaterial({ color: 0xfff201, side: THREE.DoubleSide, wireframe: false});//0x5f668e
     }
 
     // genreate mesh based on geometry1 and geometry2
     if (iszSlice) {
         mesh.material.transparent = true;
-        mesh.material.opacity = 0.1;
+        mesh.material.opacity = 0.05;
         var mesh2 = new THREE.Mesh(geometry2, colorMaterial2);
         mesh.add(mesh2);
 
@@ -626,8 +626,7 @@ export const Topologying3DMarchingCubes = function ({ points, values }: { points
         var squareMesh = new THREE.Mesh(squareGeometry, squareMaterial);
         squareMesh.position.set(0, 0, floor(zSlice));
         squareMesh.material.transparent = true;
-        squareMesh.material.opacity = 0.5;
-        squareMesh.material.alphaTest = 0.5;
+        squareMesh.material.opacity = 0.7;
         mesh.add(squareMesh);
     }
 
