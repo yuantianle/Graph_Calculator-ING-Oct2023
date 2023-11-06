@@ -309,8 +309,6 @@ const GraphCanvas: React.FC<GraphCanvasProps> = ({ formula }) => {
                 if (mesh) {
                     scene.add(mesh);
                 }
-                controlsP.enableDamping = true;
-                controlsO.enableDamping = true;
 
             };
 
@@ -541,9 +539,11 @@ const GraphCanvas: React.FC<GraphCanvasProps> = ({ formula }) => {
 
                 // Perform any updates to objects, controls, or animations
                 dragObject();
+                controlsP.enableDamping = true;
+                controlsO.enableDamping = true;
                 controlsP.update();
                 controlsO.update();
-
+                
                 controlsGizmo.update();
 
                 updateCamera();

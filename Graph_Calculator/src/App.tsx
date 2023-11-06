@@ -3,6 +3,7 @@ import './App.css';
 
 import GraphCanvas from './components/GraphCanvas';
 import InputBox from './components/InputBox';
+import './bounce.css';
 
 function App() {
     // Predefined formulas list
@@ -18,7 +19,7 @@ function App() {
         { formula: 'z=sin(sqrt(2*x^2+2*y^2))', defaultText: 'Ripple' },
         { formula: 'z*2=10-abs(x+y)-abs(y-x)', defaultText: 'Pyramid' },
         { formula: 'z=3/exp(x^2*y^2)', defaultText: 'Intersecting Fences' },
-        { formula: 'z=sin(x)*cos(y)', defaultText: 'Bumps' },      
+        { formula: 'z=sin(x)*cos(y)', defaultText: 'Bumps' },
 
         { formula: '(x+3)^2+y^2-5*(x+3)=5*sqrt((x+3)^2+y^2)', defaultText: 'Cartesian Heart' },//x^2+y^2-a*x=a*sqrt(x^2+y^2)
         { formula: '(x^2+y^2)^2=7^2*(x^2-y^2)', defaultText: 'Lemniscate of Bernoulli' },//(x^2+y^2)^2=a^2*(x^2-y^2)
@@ -46,15 +47,17 @@ function App() {
 
     return (
         <>
-            <h1>Marcus Graphing Calculator</h1>
+            <h1>
+                Marcus Graphing Calculator
+            </h1>
+
             <div className="App">
                 <header className="App-header">
-
                     <aside className={`FormulaList ${isSidebarOpen ? 'open' : 'closed'}`}>
                         <ul key={isSidebarOpen ? 'opened' : 'closed'}>
                             {formulasList.map((item, index) => (
                                 <li key={index} onClick={() => handleFormulaSelect(item.formula)}
-                                style={{ animationDelay: `${index * 0.2}s` }} // Each item will start its animation 0.1s after the previous one
+                                    style={{ animationDelay: `${index * 0.2}s` }} // Each item will start its animation 0.1s after the previous one
                                 >
                                     <span className="default-text">{item.defaultText}</span>
                                     <span className="formula-text">{item.formula}</span>
@@ -71,7 +74,7 @@ function App() {
                     <div className="Canvas"><GraphCanvas formula={formula} /></div>
                 </header>
             </div>
-            <h4>@Tianle Yuan</h4>
+            <h4 style={{ fontFamily: "normal", fontSize: "15px", color: "white", opacity: 0.8}}>@Tianle Yuan</h4>
         </>
     );
 }
